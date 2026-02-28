@@ -27,24 +27,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dad92315-77af-4aa2-96bf-8c24686d5361" name="Changes" comment="Initial Commit">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/detection.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/detection.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/exporter.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/exporter.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/models.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/ocr.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/core/ocr.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gui/App.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gui/App.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gui/App.ui" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gui/ImageCanvas.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gui/ImageCanvas.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ressources.qrc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,6 +39,13 @@
     <option name="formatViaClangd" value="false" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <excluded-from-favorite>
       <branch-storage>
@@ -120,6 +111,7 @@
     "CMake Application.TestQt.executor": "Run",
     "CMake Application.toontrad.executor": "Run",
     "CMake Debug.toontrad.executor": "Debug",
+    "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.RadMigrateCodeStyle": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -165,7 +157,7 @@
       <workItem from="1772274803160" duration="5686000" />
       <workItem from="1772289385611" duration="174000" />
       <workItem from="1772289584678" duration="21000" />
-      <workItem from="1772289647025" duration="284000" />
+      <workItem from="1772289647025" duration="939000" />
     </task>
     <task id="LOCAL-00001" summary="Initial Commit">
       <option name="closed" value="true" />
@@ -199,7 +191,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772289419352</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Initial Commit">
+      <option name="closed" value="true" />
+      <created>1772290126126</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1772290126126</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
