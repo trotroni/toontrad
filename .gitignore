@@ -1,0 +1,43 @@
+# ----------------------
+# CLion / CMake
+# ----------------------
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.ninja
+*.user
+*.user.*.swp
+*.idea/
+
+# ----------------------
+# Qt / build
+# ----------------------
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+*.app
+*.qrc.cpp
+ui_*.h
+moc_*.cpp
+qrc_*.cpp
+output/
+
+# ----------------------
+# macOS / system
+# ----------------------
+.DS_Store
+*.swp
+*.swo
+*.log
+
+# ----------------------
+# Misc / temp
+# ----------------------
+*.tmp
+*.bak
+*.backup
