@@ -23,7 +23,19 @@
 
         h1 {
             font-size: 350%;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .red {
+            color: #ff3b3b;
+        }
+
+        .blue {
+            color: #3b82ff;
+        }
+
+        .white {
+            color: white;
         }
 
         p {
@@ -35,26 +47,43 @@
             margin-top: 10px;
         }
 
-        button {
-            margin-top: 25px;
-            padding: 10px 18px;
+        .progress-container {
+            width: 300px;
+            margin: 25px auto 0; /* centre horizontalement */
             background: #1a1a1a;
-            color: #fff;
             border: 1px solid #333;
-            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden;
         }
 
-        button:hover {
-            background: #262626;
+        .progress-bar {
+            width: 5%;
+            height: 25px;
+            background: #ff0000;
+            text-align: center;
+            color: white;
+            line-height: 25px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h1>Projet en cours de développement</h1>
-    <p>{Cette page est en cours de développement}</p>
+    <h1>
+        <span class="blue">Projet en cours</span>
+        <span class="white">de</span>
+        <span class="red">développement</span>
+    </h1>
+
+    <p>Cette page est en cours de développement</p>
     <div class="code">Contact : <b>trotroni@outlook.com</b></div>
+
+    <div class="progress-container">
+        <div class="progress-bar">
+        </div>
+    </div>
+    <h3>5%</h3>
 </div>
 
 </body>
