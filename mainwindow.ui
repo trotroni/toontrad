@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>600</width>
+                <height>400</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>Mon Projet</string>
+        </property>
+        <widget class="QWidget" name="centralwidget">
+            <!-- Label -->
+            <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                    <widget class="QLabel" name="labelWelcome">
+                        <property name="text">
+                            <string>Bienvenue dans ToonTrad !</string>
+                        </property>
+                    </widget>
+                </item>
+                <item>
+                    <widget class="QPushButton" name="btnStart">
+                        <property name="text">
+                            <string>Démarrer</string>
+                        </property>
+                    </widget>
+                </item>
+                <item>
+                    <widget class="QLineEdit" name="inputName">
+                        <property name="placeholderText">
+                            <string>Entrez votre nom...</string>
+                        </property>
+                    </widget>
+                </item>
+            </layout>
+        </widget>
+    </widget>
+    <resources/>
+    <connections/>
+</ui>
