@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+<class>OCRwindow</class>
+
+<widget class="QMainWindow" name="OCRwindow">
+
+<property name="geometry">
+<rect>
+<x>0</x>
+<y>0</y>
+<width>1200</width>
+<height>800</height>
+</rect>
+</property>
+
+<property name="windowTitle">
+<string>OCR Tool</string>
+</property>
+
+<widget class="QWidget" name="centralwidget">
+
+<layout class="QHBoxLayout">
+
+<!-- IMAGE -->
+
+<item>
+<widget class="QFrame">
+<layout class="QVBoxLayout">
+
+<item>
+<widget class="QLabel" name="imageLabel">
+<property name="text">
+<string>Image Manga</string>
+</property>
+</widget>
+</item>
+
+</layout>
+</widget>
+</item>
+
+<!-- OCR PANEL -->
+
+<item>
+
+<widget class="QScrollArea">
+
+<property name="widgetResizable">
+<bool>true</bool>
+</property>
+
+<widget class="QWidget">
+
+<layout class="QVBoxLayout" name="ocrLayout"/>
+
+</widget>
+
+</widget>
+
+</item>
+
+</layout>
+
+</widget>
+
+</widget>
+</ui>
