@@ -15,8 +15,10 @@ class OCRwindow : public QMainWindow
 public:
     explicit OCRwindow(QWidget *parent = nullptr);
     ~OCRwindow();
-
     void addOCRBlock(int id, QString original);
+
+private slots:
+    void loadTestImage();
 
 private:
     Ui::OCRwindow *ui;

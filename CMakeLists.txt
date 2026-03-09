@@ -53,3 +53,7 @@ qt_add_executable(ToonTrad
 )
 
 target_link_libraries(ToonTrad PRIVATE Qt6::Widgets)
+
+set_target_properties(ToonTrad PROPERTIES
+        MACOSX_BUNDLE TRUE
+)

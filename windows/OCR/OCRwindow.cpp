@@ -51,22 +51,18 @@ void OCRwindow::addOCRBlock(int id, QString original)
 void OCRwindow::loadTestImage()
 {
     QString file = QFileDialog::getOpenFileName(
-        this,
-        "Open Image",
-        "",
-        "Images (*.png *.jpg *.jpeg)"
+        this, "Open Image", "", "Images (*.png *.jpg *.jpeg)"
     );
 
-    if(file.isEmpty())
-        return;
+    if(file.isEmpty()) return;
 
     QImage image(file);
-
     OCRManager ocr;
     auto blocks = ocr.extractText(image);
 
+    int id = 1;
     for(const auto& block : blocks)
     {
-        addOCRBlock(block.boundingBox, block.originalText);
+        addOCRBlock(id++, block.originalText);  // ← id compteur, pas boundingBox
     }
 }

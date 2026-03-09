@@ -17,7 +17,11 @@ public:
 
 private slots:
     void on_btnOpenOCR_clicked();
-    void on_buttonBox_2_accepted();
+    void on_buttonBox_accepted();
+    void on_buttonBox_rejected();
+    void on_githubRepoButton_clicked();
+    void on_githubWebButton_clicked();
+    void on_githubDocsButton_clicked();
 
 private:
     Ui::MainWindow *ui;
