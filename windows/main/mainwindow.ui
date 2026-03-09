@@ -205,9 +205,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioButton">
+       <widget class="QRadioButton" name="GPUoption">
         <property name="text">
-         <string>RadioButton</string>
+         <string>activé GPU</string>
         </property>
        </widget>
       </item>
