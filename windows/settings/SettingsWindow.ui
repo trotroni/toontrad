@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsWindow</class>
+ <widget class="QDialog" name="SettingsWindow">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>420</width><height>380</height></rect></property>
+  <property name="windowTitle"><string>Paramètres OCR — Sensibilité</string></property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QGroupBox" name="groupOCR">
+     <property name="title"><string>Paramètres de détection</string></property>
+     <layout class="QFormLayout" name="formLayout">
+
+      <!-- Seuil de confiance -->
+      <item row="0" column="0"><widget class="QLabel" name="lblConf"><property name="text"><string>Confiance minimale :</string></property></widget></item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout">
+        <item><widget class="QSlider" name="sliderConfidence"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="minimum"><number>10</number></property><property name="maximum"><number>100</number></property><property name="value"><number>40</number></property></widget></item>
+        <item><widget class="QLabel" name="lblConfValue"><property name="text"><string>40%</string></property><property name="minimumWidth"><number>35</number></property></widget></item>
+       </layout>
+      </item>
+
+      <!-- Aire minimale -->
+      <item row="1" column="0"><widget class="QLabel" name="lblArea"><property name="text"><string>Surface min. bulle (px²) :</string></property></widget></item>
+      <item row="1" column="1"><widget class="QSpinBox" name="spinMinArea"><property name="minimum"><number>100</number></property><property name="maximum"><number>50000</number></property><property name="singleStep"><number>500</number></property><property name="value"><number>2000</number></property></widget></item>
+
+      <!-- Langue OCR -->
+      <item row="2" column="0"><widget class="QLabel" name="lblLang"><property name="text"><string>Langue source :</string></property></widget></item>
+      <item row="2" column="1"><widget class="QComboBox" name="comboLanguage"/></item>
+
+      <!-- PSM Tesseract -->
+      <item row="3" column="0"><widget class="QLabel" name="lblPSM"><property name="text"><string>PSM Tesseract :</string></property></widget></item>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="comboPSM">
+        <item><property name="text"><string>3 — Automatique</string></property></item>
+        <item><property name="text"><string>6 — Bloc de texte uniforme</string></property></item>
+        <item><property name="text"><string>11 — Texte épars</string></property></item>
+        <item><property name="text"><string>13 — Ligne unique</string></property></item>
+       </widget>
+      </item>
+
+     </layout>
+    </widget>
+   </item>
+
+   <!-- Python config -->
+   <item>
+    <widget class="QGroupBox" name="groupPython">
+     <property name="title"><string>Chemins Python</string></property>
+     <layout class="QFormLayout">
+      <item row="0" column="0"><widget class="QLabel"><property name="text"><string>Exécutable Python :</string></property></widget></item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout">
+        <item><widget class="QLineEdit" name="editPythonBin"/></item>
+        <item><widget class="QPushButton" name="btnBrowsePython"><property name="text"><string>...</string></property><property name="maximumWidth"><number>30</number></property></widget></item>
+       </layout>
+      </item>
+      <item row="1" column="0"><widget class="QLabel"><property name="text"><string>Script main_ocr.py :</string></property></widget></item>
+      <item row="1" column="1">
+       <layout class="QHBoxLayout">
+        <item><widget class="QLineEdit" name="editPythonScript"/></item>
+        <item><widget class="QPushButton" name="btnBrowseScript"><property name="text"><string>...</string></property><property name="maximumWidth"><number>30</number></property></widget></item>
+       </layout>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QPushButton" name="btnTestPython"><property name="text"><string>Tester la connexion Python</string></property></widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons"><set>QDialogButtonBox::Ok|QDialogButtonBox::Cancel</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>

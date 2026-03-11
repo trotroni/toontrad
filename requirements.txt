@@ -1,0 +1,23 @@
+# ToonTrad — Dépendances Python
+# Installer avec : pip install -r requirements.txt
+#
+# PyTorch (GPU CUDA) :
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# PyTorch (CPU uniquement) :
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Moteurs OCR (installer ceux dont vous avez besoin)
+paddlepaddle>=2.5.0       # PaddleOCR GPU : paddlepaddle-gpu
+paddleocr>=2.7.0
+easyocr>=1.7.0
+transformers>=4.35.0      # TrOCR (Microsoft)
+manga-ocr>=0.1.10         # manga-ocr
+
+# Tesseract (fallback CPU — installer aussi le binaire système)
+# Ubuntu : sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-jpn
+pytesseract>=0.3.10
+Pillow>=10.0.0
+pandas>=2.0.0
