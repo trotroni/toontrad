@@ -13,6 +13,12 @@
 #include <QApplication>
 #include <QFile>
 #include <QDebug>
+#ifdef Q_OS_MAC
+#include <sys/sysctl.h>
+#endif
+#ifdef Q_OS_LINUX
+#include <sys/sysinfo.h>
+#endif
 
 
 static const char* DARK_THEME = R"(
@@ -82,7 +88,6 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->btnRemoveProject, &QPushButton::clicked, this, &MainWindow::on_btnRemoveProject_clicked);
     connect(ui->btnOpenProject,   &QPushButton::clicked, this, &MainWindow::on_btnOpenProject_clicked);
     connect(ui->btnSettings,      &QPushButton::clicked, this, &MainWindow::on_btnSettings_clicked);
-    connect(ui->btnToggleTheme,   &QPushButton::clicked, this, &MainWindow::on_btnToggleTheme_clicked);
 
     connect(ui->listProjects, &QListWidget::itemDoubleClicked,
             this, &MainWindow::on_listProjects_itemDoubleClicked);
@@ -91,8 +96,25 @@ MainWindow::MainWindow(QWidget* parent)
     connect(ui->comboDevice, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::on_comboDevice_currentIndexChanged);
 
+    // Détecte la RAM totale et ajuste le slider
+    {
+        int totalGb = 16; // valeur par défaut
+#ifdef Q_OS_MAC
+        int64_t mem = 0;
+        size_t len = sizeof(mem);
+        if (sysctlbyname("hw.memsize", &mem, &len, nullptr, 0) == 0)
+            totalGb = static_cast<int>(mem / (1024LL * 1024 * 1024));
+#elif defined(Q_OS_LINUX)
+        struct sysinfo si;
+        if (sysinfo(&si) == 0)
+            totalGb = static_cast<int>(si.totalram * si.mem_unit / (1024LL * 1024 * 1024));
+#endif
+        ui->sliderRAM->setMaximum(qMax(totalGb, 4));
+        ui->sliderRAM->setValue(qMin(4, totalGb));
+        ui->lblRAMVal->setText(QString::number(ui->sliderRAM->value()) + " GB");
+    }
+
     refreshProjectList();
-    applyTheme();
     statusBar()->showMessage("Prêt");
 }
 
@@ -253,7 +275,11 @@ OCRConfig MainWindow::currentConfig() const
     c.engine          = ui->comboEngine->currentData().toString();
     c.device          = ui->comboDevice->currentData().toString();
     c.gpuMemFraction  = ui->sliderVRAM->value() / 100.0;
-    c.ramFraction     = ui->sliderRAM->value()  / 100.0;
+    // Convertit GB → fraction (Python attend une fraction de la RAM totale)
+    {
+        double totalGb = qMax(ui->sliderRAM->maximum(), 1);
+        c.ramFraction  = ui->sliderRAM->value() / totalGb;
+    }
 
     if (c.device.startsWith("cuda:"))
         c.gpuId = c.device.mid(5).toInt();
@@ -267,7 +293,7 @@ void MainWindow::on_sliderVRAM_valueChanged(int value)
 
 void MainWindow::on_sliderRAM_valueChanged(int value)
 {
-    ui->lblRAMVal->setText(QString::number(value) + "%");
+    ui->lblRAMVal->setText(QString::number(value) + " GB");
 }
 
 void MainWindow::on_comboDevice_currentIndexChanged(int /*index*/)
@@ -287,16 +313,7 @@ void MainWindow::on_btnSettings_clicked()
         m_config = dlg.config();
 }
 
-
-void MainWindow::on_btnToggleTheme_clicked()
-{
-    Config::darkMode = !Config::darkMode;
-    Config::save();
-    applyTheme();
-}
-
 void MainWindow::applyTheme()
 {
-    qApp->setStyleSheet(Config::darkMode ? DARK_THEME : LIGHT_THEME);
-    ui->btnToggleTheme->setText(Config::darkMode ? "Light" : "Dark");
+    //qApp->setStyleSheet(DARK_THEME);
 }

@@ -49,7 +49,6 @@ set(HEADERS
 )
 
 set(UIS
-        windows/main/mainwindow.ui
         windows/OCR/OCRwindow.ui
         windows/settings/SettingsWindow.ui
 )

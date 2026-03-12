@@ -93,13 +93,6 @@
            </property>
           </spacer>
          </item>
-         <item>
-          <widget class="QPushButton" name="btnToggleTheme">
-           <property name="text">
-            <string>Light</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
@@ -144,6 +137,9 @@
           <string>Ressources</string>
          </property>
          <layout class="QFormLayout">
+          <property name="fieldGrowthPolicy">
+           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="lblVRAM">
             <property name="text">
@@ -155,6 +151,12 @@
            <layout class="QHBoxLayout">
             <item>
              <widget class="QSlider" name="sliderVRAM">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimum">
                <number>10</number>
               </property>
@@ -189,14 +191,23 @@
            <layout class="QHBoxLayout">
             <item>
              <widget class="QSlider" name="sliderRAM">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimum">
-               <number>10</number>
+               <number>1</number>
               </property>
               <property name="maximum">
-               <number>100</number>
+               <number>64</number>
               </property>
               <property name="value">
-               <number>50</number>
+               <number>4</number>
+              </property>
+              <property name="singleStep">
+               <number>1</number>
               </property>
               <property name="orientation">
                <enum>Qt::Orientation::Horizontal</enum>
@@ -206,7 +217,7 @@
             <item>
              <widget class="QLabel" name="lblRAMVal">
               <property name="text">
-               <string>50%</string>
+               <string>4 GB</string>
               </property>
              </widget>
             </item>

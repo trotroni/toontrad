@@ -26,7 +26,6 @@ private slots:
     void on_btnRemoveProject_clicked();
     void on_btnOpenProject_clicked();
     void on_btnSettings_clicked();
-    void on_btnToggleTheme_clicked();
     void on_listProjects_itemDoubleClicked();
     void on_listProjects_currentRowChanged(int row);
     void on_sliderVRAM_valueChanged(int value);
