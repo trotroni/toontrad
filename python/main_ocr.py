@@ -13,11 +13,40 @@ import sys
 import json
 import os
 
+# Ajoute le dossier python/ au path pour les imports relatifs
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+def _setup_tessdata():
+    """
+    Définit TESSDATA_PREFIX vers le dossier bundlé avec l'app.
+    Structure attendue (copiée par CMake au build) :
+        <exe>/
+        ├── python/main_ocr.py   ← ce fichier
+        └── resources/tessdata/  ← modèles bundlés
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Remonte d'un niveau : python/ → répertoire de l'exécutable
+    exe_dir    = os.path.normpath(os.path.join(script_dir, ".."))
+    tessdata   = os.path.join(exe_dir, "resources", "tessdata")
+
+    if os.path.isdir(tessdata):
+        os.environ["TESSDATA_PREFIX"] = tessdata
+        print(f"[main_ocr] TESSDATA_PREFIX={tessdata}", file=sys.stderr)
+    else:
+        print(f"[main_ocr] ERREUR: resources/tessdata introuvable ({tessdata})",
+              file=sys.stderr)
+        print("[main_ocr] Relancez le build (cmake --build) pour télécharger les modèles.",
+              file=sys.stderr)
+
 
 def main():
     if len(sys.argv) < 2:
         print("Usage: main_ocr.py '<json_args>'", file=sys.stderr)
         sys.exit(1)
+
+    # Définit tessdata avant tout import OCR
+    _setup_tessdata()
 
     # Parse les arguments JSON
     try:
@@ -31,7 +60,7 @@ def main():
         print(f"[main_ocr] Image introuvable: {image_path}", file=sys.stderr)
         sys.exit(1)
 
-    # Instancie l'OCRManager avec les paramètres Qt
+    # Instancie l'OCRManager
     try:
         from ocr_manager import OCRManager
         ocr = OCRManager(
@@ -63,6 +92,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # Ajoute le dossier python/ au path pour les imports relatifs
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     main()

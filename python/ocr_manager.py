@@ -13,9 +13,44 @@ Retourne une liste de dicts :
 """
 import os
 import sys
+import subprocess
 from typing import List, Dict, Any
 
 from ocr_engine import resolve_device, select_engine_auto
+
+
+def _find_tessdata() -> str:
+    """Trouve le dossier tessdata sur le système (macOS/Linux/Windows)."""
+    # 1. Variable d'environnement déjà définie
+    env = os.environ.get("TESSDATA_PREFIX", "")
+    if env and os.path.isdir(env):
+        return env
+
+    # 2. Chemins courants macOS (Homebrew Intel / Apple Silicon)
+    candidates = [
+        "/usr/local/share/tessdata",           # brew Intel
+        "/opt/homebrew/share/tessdata",         # brew Apple Silicon
+        "/usr/share/tessdata",                  # Linux apt
+        "/usr/local/share/tesseract-ocr/5/tessdata",
+        "/usr/share/tesseract-ocr/4.00/tessdata",
+    ]
+    for p in candidates:
+        if os.path.isdir(p):
+            return p
+
+    # 3. Essaie de demander à brew
+    try:
+        result = subprocess.run(
+            ["brew", "--prefix", "tesseract"],
+            capture_output=True, text=True, timeout=5)
+        prefix = result.stdout.strip()
+        p = os.path.join(prefix, "share", "tessdata")
+        if os.path.isdir(p):
+            return p
+    except Exception:
+        pass
+
+    return ""
 
 
 class OCRManager:
@@ -23,16 +58,16 @@ class OCRManager:
     ENGINES = ["paddleocr", "easyocr", "trocr", "manga-ocr", "tesseract"]
 
     def __init__(
-        self,
-        engine: str = "auto",
-        device: str = "auto",
-        gpu_id: int = 0,
-        gpu_memory_fraction: float = 0.5,
-        ram_fraction: float = 0.5,
-        confidence_threshold: float = 0.4,
-        min_bubble_area: int = 2000,
-        language: str = "en",
-        psm_mode: int = 6,
+            self,
+            engine: str = "auto",
+            device: str = "auto",
+            gpu_id: int = 0,
+            gpu_memory_fraction: float = 0.5,
+            ram_fraction: float = 0.5,
+            confidence_threshold: float = 0.4,
+            min_bubble_area: int = 2000,
+            language: str = "en",
+            psm_mode: int = 6,
     ):
         self.confidence_threshold = confidence_threshold
         self.min_bubble_area      = min_bubble_area
@@ -241,33 +276,48 @@ class OCRManager:
     def _extract_tesseract(self, path: str) -> list:
         import pytesseract
         from PIL import Image
-        import pandas as pd
+        from collections import defaultdict
+
+        # TESSDATA_PREFIX est déjà défini par setup.py (appelé depuis main_ocr.py)
+        tessdata = os.environ.get("TESSDATA_PREFIX", "")
+        if tessdata:
+            print(f"[tesseract] TESSDATA_PREFIX={tessdata}", file=sys.stderr)
+        else:
+            print("[tesseract] AVERTISSEMENT: TESSDATA_PREFIX non défini", file=sys.stderr)
 
         img = Image.open(path)
         config = f"--psm {self.psm_mode} --oem 3"
+
+        # DICT : pas besoin de pandas
         data = pytesseract.image_to_data(
             img, lang=self.language, config=config,
-            output_type=pytesseract.Output.DATAFRAME)
+            output_type=pytesseract.Output.DICT)
 
-        # Filtre les lignes vides
-        data = data[data["conf"] > 0]
-        data = data[data["text"].notna()]
-        data = data[data["text"].str.strip() != ""]
+        n = len(data["text"])
+        groups = defaultdict(list)
+        for i in range(n):
+            word = str(data["text"][i]).strip()
+            conf = int(data["conf"][i])
+            if not word or conf < 0:
+                continue
+            key = (data["block_num"][i], data["par_num"][i])
+            groups[key].append({
+                "word": word, "conf": conf,
+                "x": data["left"][i], "y": data["top"][i],
+                "w": data["width"][i], "h": data["height"][i],
+            })
 
-        # Regroupe par bloc (block_num + par_num)
-        groups = data.groupby(["block_num", "par_num"])
         blocks = []
-        for _, grp in groups:
-            text = " ".join(grp["text"].astype(str).str.strip())
+        for words in groups.values():
+            text = " ".join(w["word"] for w in words)
             if not text.strip():
                 continue
-            conf = grp["conf"].astype(float).mean() / 100.0
-
-            x = int(grp["left"].min())
-            y = int(grp["top"].min())
-            w = int((grp["left"] + grp["width"]).max() - x)
-            h = int((grp["top"] + grp["height"]).max() - y)
-            box = [[x, y], [x+w, y], [x+w, y+h], [x, y+h]]
+            conf = sum(w["conf"] for w in words) / len(words) / 100.0
+            x1 = min(w["x"]          for w in words)
+            y1 = min(w["y"]          for w in words)
+            x2 = max(w["x"] + w["w"] for w in words)
+            y2 = max(w["y"] + w["h"] for w in words)
+            box = [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
             blocks.append({"text": text, "confidence": conf, "box": box})
 
         return self._filter(blocks)

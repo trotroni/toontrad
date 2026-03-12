@@ -5,14 +5,14 @@
 
 QString Config::pythonBin    = "python3";
 QString Config::pythonScript = "";
-bool    Config::darkMode     = false;
+bool    Config::darkMode     = true;
 QString Config::deeplApiKey  = "";
 
 void Config::load()
 {
     QSettings s("ToonTrad", "ToonTrad");
     pythonBin    = s.value("pythonBin", "python3").toString();
-    darkMode     = s.value("darkMode", false).toBool();
+    darkMode     = s.value("darkMode", true).toBool();
     deeplApiKey  = s.value("deeplApiKey", "").toString();
 
     QString appDir = QCoreApplication::applicationDirPath();

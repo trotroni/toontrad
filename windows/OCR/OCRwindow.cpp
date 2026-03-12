@@ -17,6 +17,9 @@
 #include <QApplication>
 #include <QDebug>
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Constructeur
+// ─────────────────────────────────────────────────────────────────────────────
 
 OCRwindow::OCRwindow(Project* project, const OCRConfig& config, QWidget* parent)
     : QMainWindow(parent)
@@ -27,15 +30,18 @@ OCRwindow::OCRwindow(Project* project, const OCRConfig& config, QWidget* parent)
     ui->setupUi(this);
     setWindowTitle("ToonTrad — " + project->name);
 
+    // Remplace le QGraphicsView du .ui par notre ImageCanvas custom
     auto* oldCanvas = ui->imageCanvas;
     auto* canvas    = new ImageCanvas(ui->imageFrame);
     oldCanvas->parentWidget()->layout()->replaceWidget(oldCanvas, canvas);
     oldCanvas->deleteLater();
-    ui->imageCanvas = canvas;
+    ui->imageCanvas = canvas;  // réassigne le pointeur (cast ci-dessous)
 
+    // Clic droit sur une zone → suppression
     connect(canvas, &ImageCanvas::blockRightClicked,
             this, &OCRwindow::onBlockDeleted);
 
+    // Connexions boutons
     connect(ui->btnPrev,        &QPushButton::clicked, this, &OCRwindow::on_btnPrev_clicked);
     connect(ui->btnNext,        &QPushButton::clicked, this, &OCRwindow::on_btnNext_clicked);
     connect(ui->btnRunOCR,      &QPushButton::clicked, this, &OCRwindow::on_btnRunOCR_clicked);
@@ -55,6 +61,9 @@ OCRwindow::~OCRwindow()
     delete ui;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 ImagePage* OCRwindow::currentPage()
 {
@@ -70,10 +79,16 @@ QString OCRwindow::currentImagePath()
     return p ? m_project->absolutePath(*p) : QString();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Navigation
+// ─────────────────────────────────────────────────────────────────────────────
 
 void OCRwindow::loadPage(int index)
 {
-    on_btnSave_clicked();
+    // Sauvegarde silencieuse uniquement si la page courante a des blocs
+    ImagePage* cur = currentPage();
+    if (cur && cur->ocrDone)
+        m_project->save();
 
     m_currentPageIndex = index;
     clearBlockWidgets();
@@ -136,6 +151,10 @@ void OCRwindow::on_btnNext_clicked()
         loadPage(m_currentPageIndex + 1);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  OCR
+// ─────────────────────────────────────────────────────────────────────────────
+
 void OCRwindow::on_btnRunOCR_clicked()
 {
     ImagePage* page = currentPage();
@@ -147,6 +166,7 @@ void OCRwindow::on_btnRunOCR_clicked()
         return;
     }
 
+    // Vérification Python
     QString pyErr;
     if (!OCRManager::checkPythonAvailable(&pyErr)) {
         QMessageBox::critical(this, "Python introuvable",
@@ -175,6 +195,9 @@ void OCRwindow::on_btnRunOCR_clicked()
     ui->btnRunOCR->setEnabled(true);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Blocs UI
+// ─────────────────────────────────────────────────────────────────────────────
 
 void OCRwindow::addBlockWidget(const TextBlock& block)
 {
@@ -185,6 +208,7 @@ void OCRwindow::addBlockWidget(const TextBlock& block)
     vl->setContentsMargins(6,6,6,6);
     vl->setSpacing(4);
 
+    // En-tête
     QHBoxLayout* hl = new QHBoxLayout();
     QLabel* idLbl   = new QLabel(QString("Bulle #%1").arg(block.id));
     idLbl->setStyleSheet("font-weight: bold;");
@@ -209,12 +233,14 @@ void OCRwindow::addBlockWidget(const TextBlock& block)
     hl->addStretch();
     hl->addWidget(btnDel);
 
+    // Texte original
     QLabel* lblOrig = new QLabel("Original :");
     lblOrig->setStyleSheet("font-size: 11px; color: #888;");
     QTextEdit* origEdit = new QTextEdit();
     origEdit->setText(block.originalText);
     origEdit->setMaximumHeight(65);
 
+    // Texte traduit
     QLabel* lblTrad = new QLabel("Traduction :");
     lblTrad->setStyleSheet("font-size: 11px; color: #888;");
     QTextEdit* tradEdit = new QTextEdit();
@@ -222,6 +248,7 @@ void OCRwindow::addBlockWidget(const TextBlock& block)
     tradEdit->setText(block.translatedText);
     tradEdit->setMaximumHeight(65);
 
+    // Sync en temps réel
     connect(origEdit, &QTextEdit::textChanged, this, [this, origEdit, bid]() {
         ImagePage* p = currentPage();
         if (!p) return;
@@ -283,6 +310,10 @@ void OCRwindow::onBlockDeleted(int id)
         QString("Zone #%1 supprimée. %2 bloc(s) restant(s).")
             .arg(id).arg(page->blocks.size()));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Sauvegarde & Export
+// ─────────────────────────────────────────────────────────────────────────────
 
 void OCRwindow::on_btnSave_clicked()
 {
