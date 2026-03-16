@@ -81,20 +81,19 @@ MainWindow::MainWindow(QWidget* parent)
     ui->comboDevice->addItem("CPU uniquement",   "cpu");
     detectGPUs();
 
-    connect(ui->sliderVRAM, &QSlider::valueChanged, this, &MainWindow::on_sliderVRAM_valueChanged);
+    /*connect(ui->sliderVRAM, &QSlider::valueChanged, this, &MainWindow::on_sliderVRAM_valueChanged);
     connect(ui->sliderRAM,  &QSlider::valueChanged, this, &MainWindow::on_sliderRAM_valueChanged);
 
     connect(ui->btnNewProject,    &QPushButton::clicked, this, &MainWindow::on_btnNewProject_clicked);
     connect(ui->btnRemoveProject, &QPushButton::clicked, this, &MainWindow::on_btnRemoveProject_clicked);
     connect(ui->btnOpenProject,   &QPushButton::clicked, this, &MainWindow::on_btnOpenProject_clicked);
-    connect(ui->btnSettings,      &QPushButton::clicked, this, &MainWindow::on_btnSettings_clicked);
 
     connect(ui->listProjects, &QListWidget::itemDoubleClicked,
             this, &MainWindow::on_listProjects_itemDoubleClicked);
     connect(ui->listProjects, &QListWidget::currentRowChanged,
             this, &MainWindow::on_listProjects_currentRowChanged);
     connect(ui->comboDevice, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &MainWindow::on_comboDevice_currentIndexChanged);
+            this, &MainWindow::on_comboDevice_currentIndexChanged);*/
 
     // Détecte la RAM totale et ajuste le slider
     {

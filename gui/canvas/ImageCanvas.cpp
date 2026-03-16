@@ -20,11 +20,25 @@ void ImageCanvas::setImage(const QImage& image)
 {
     m_scene->clear();
     m_items.clear();
+    m_pixmapItem = nullptr;
+
     if (image.isNull()) return;
 
-    m_scene->addPixmap(QPixmap::fromImage(image));
+    m_pixmapItem = m_scene->addPixmap(QPixmap::fromImage(image));
     m_scene->setSceneRect(image.rect());
-    fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+
+    // fitInView ici ne sert que si le widget est déjà visible et dimensionné
+    if (!size().isEmpty())
+        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+}
+
+void ImageCanvas::resizeEvent(QResizeEvent* event)
+{
+    QGraphicsView::resizeEvent(event);
+
+    // Re-fit à chaque fois que le widget change de taille (y compris au 1er affichage)
+    if (m_pixmapItem && !m_scene->sceneRect().isEmpty())
+        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
 }
 
 QColor ImageCanvas::colorForConfidence(double conf) const
