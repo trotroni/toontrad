@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
 # ── Sources ───────────────────────────────────────────────────────────────────
 set(SOURCES
@@ -49,6 +49,7 @@ set(HEADERS
 )
 
 set(UIS
+        windows/main/mainwindow.ui
         windows/OCR/OCRwindow.ui
         windows/settings/SettingsWindow.ui
 )
@@ -59,7 +60,7 @@ qt_add_executable(ToonTrad
         ${UIS}
 )
 
-target_link_libraries(ToonTrad PRIVATE Qt6::Widgets)
+target_link_libraries(ToonTrad PRIVATE Qt6::Widgets Qt6::Network)
 target_include_directories(ToonTrad PRIVATE ${CMAKE_SOURCE_DIR})
 
 # ── Détection de Python (même interpréteur que celui configuré dans l'app) ────

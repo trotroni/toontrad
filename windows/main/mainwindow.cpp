@@ -15,6 +15,11 @@
 #include <QDebug>
 #ifdef Q_OS_MAC
 #include <sys/sysctl.h>
+#include <QNetworkRequest>
+#include <QJsonObject>
+#include <QDir>
+#include <QCoreApplication>
+
 #endif
 #ifdef Q_OS_LINUX
 #include <sys/sysinfo.h>
@@ -115,8 +120,63 @@ MainWindow::MainWindow(QWidget* parent)
 
     refreshProjectList();
     statusBar()->showMessage("Prêt");
+
+    m_lblVersion = new QLabel(QString("v%1").arg(Config::VERSION_STR));
+    m_lblVersion->setStyleSheet("color: #888; padding: 0 8px;");
+    statusBar()->addPermanentWidget(m_lblVersion);
+
+    runPipUpdate();
+    checkLatestVersion();
+}
+void MainWindow::runPipUpdate()
+{
+    // Cherche requirements.txt à côté de l'exe
+    QString reqPath = QCoreApplication::applicationDirPath() + "/../../../requirements.txt";
+    reqPath = QDir::cleanPath(reqPath);
+    if (!QFile::exists(reqPath)) return;
+
+    QProcess* proc = new QProcess(this);
+    proc->setProcessChannelMode(QProcess::MergedChannels);
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [proc](int code, QProcess::ExitStatus) {
+        qDebug() << "pip update terminé, code:" << code;
+        proc->deleteLater();
+    });
+    proc->start(Config::pythonBin, {
+        "-m", "pip", "install", "-r", reqPath,
+        "--upgrade", "--quiet"
+    });
 }
 
+void MainWindow::checkLatestVersion()
+{
+    QNetworkRequest req(QUrl("https://api.github.com/repos/trotroni/toontrad/releases/latest"));
+    req.setRawHeader("Accept", "application/vnd.github+json");
+    req.setRawHeader("User-Agent", "ToonTrad");
+
+    QNetworkReply* reply = m_network.get(req);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            m_lblVersion->setText(QString("v%1").arg(Config::VERSION_STR));
+            return;
+        }
+
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        if (!doc.isObject()) return;
+
+        // GitHub retourne "v2.1.0" → on enlève le "v"
+        QString latest = doc.object()["tag_name"].toString();
+        if (latest.startsWith("v")) latest = latest.mid(1);
+
+        QString current = Config::VERSION_STR;
+        if (latest == current)
+            m_lblVersion->setText(QString("v%1 (latest)").arg(current));
+        else
+            m_lblVersion->setText(
+                QString("v%1  ⬆ v%2 dispo").arg(current, latest));
+    });
+}
 MainWindow::~MainWindow()
 {
     Config::save();
@@ -314,5 +374,5 @@ void MainWindow::on_btnSettings_clicked()
 
 void MainWindow::applyTheme()
 {
-    //qApp->setStyleSheet(DARK_THEME);
+    qApp->setStyleSheet("");
 }

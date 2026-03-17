@@ -6,7 +6,7 @@
 class Config
 {
 public:
-    static const int VERSION = 2;
+    inline static const QString VERSION_STR = "v.0.0.1-debug";
 
     static QString pythonBin;
     static QString pythonScript;

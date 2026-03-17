@@ -74,3 +74,35 @@ std::vector<QRect> BubbleDetector::detect(const QImage& image,
     qDebug() << "BubbleDetector (fallback):" << bubbles.size() << "bulles";
     return bubbles;
 }
+
+QRect BubbleDetector::detectFromPoint(const QImage& image, int x, int y,
+                                       int whiteThreshold, int minArea)
+{
+    if (image.isNull()) return {};
+    QImage img = image.convertToFormat(QImage::Format_ARGB32);
+    int w = img.width(), h = img.height();
+    if (x < 0 || x >= w || y < 0 || y >= h) return {};
+
+    // Si le pixel cliqué n'est pas blanc, cherche le blanc le plus proche
+    int startX = x, startY = y;
+    if (!isWhite(img.pixel(x, y), whiteThreshold)) {
+        bool found = false;
+        for (int r = 1; r < 80 && !found; ++r) {
+            for (int dy = -r; dy <= r && !found; ++dy) {
+                for (int dx = -r; dx <= r && !found; ++dx) {
+                    if (qAbs(dx) != r && qAbs(dy) != r) continue;
+                    int nx = x + dx, ny = y + dy;
+                    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                    if (isWhite(img.pixel(nx, ny), whiteThreshold)) {
+                        startX = nx; startY = ny; found = true;
+                    }
+                }
+            }
+        }
+        if (!found) return {};
+    }
+
+    std::vector<std::vector<bool>> visited(h, std::vector<bool>(w, false));
+    QRect r = floodFillBounds(img, startX, startY, visited);
+    return isValidBubble(r, w, h, minArea) ? r : QRect{};
+}

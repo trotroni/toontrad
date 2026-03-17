@@ -18,6 +18,8 @@ private:
     bool  isWhite(QRgb pixel, int threshold) const;
     QRect floodFillBounds(const QImage& img, int x, int y,
                           std::vector<std::vector<bool>>& visited) const;
+    QRect detectFromPoint(const QImage& image, int x, int y,
+                      int whiteThreshold = 210, int minArea = 500);
     bool  isValidBubble(const QRect& r, int imgW, int imgH, int minArea) const;
 };
 

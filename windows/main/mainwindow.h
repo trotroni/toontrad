@@ -5,6 +5,9 @@
 #include <QProcess>
 #include <QPointer>
 #include <QMap>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QLabel>
 #include "../../core/OCRConfig.h"
 
 QT_BEGIN_NAMESPACE
@@ -42,6 +45,12 @@ private:
     void openSelectedProject();
 
     QMap<QString, QPointer<QMainWindow>> m_openWindows;
+
+    void checkLatestVersion();
+    void runPipUpdate();
+
+    QLabel*               m_lblVersion = nullptr;
+    QNetworkAccessManager m_network;
 };
 
 #endif // MAINWINDOW_H

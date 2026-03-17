@@ -25,6 +25,7 @@ public:
 
 signals:
     void blockRightClicked(int id);
+    void addBubbleRequested(QPointF scenePos);
 
 protected:
     void wheelEvent(QWheelEvent* event) override;

@@ -33,6 +33,8 @@ private slots:
 
     void onBlockDeleted(int id);
 
+    void onAddBubbleRequested(QPointF scenePos);
+
 private:
     Ui::OCRwindow* ui;
     Project*       m_project;

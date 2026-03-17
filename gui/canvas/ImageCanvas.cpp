@@ -123,3 +123,27 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
     }
     QGraphicsView::mousePressEvent(event);
 }
+
+void ImageCanvas::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::RightButton) {
+        QPointF scenePos = mapToScene(event->pos());
+        QGraphicsItem* hit = m_scene->itemAt(scenePos, transform());
+
+        QMenu menu(this);
+
+        if (hit && hit->data(0).isValid()) {
+            int id = hit->data(0).toInt();
+            QAction* del = menu.addAction(
+                QString("Supprimer la zone #%1").arg(id));
+            if (menu.exec(event->globalPosition().toPoint()) == del)
+                emit blockRightClicked(id);
+        } else {
+            QAction* add = menu.addAction("➕ Ajouter une bulle ici");
+            if (menu.exec(event->globalPosition().toPoint()) == add)
+                emit addBubbleRequested(scenePos);
+        }
+        return;
+    }
+    QGraphicsView::mousePressEvent(event);
+}

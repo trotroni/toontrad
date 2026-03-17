@@ -154,6 +154,17 @@ class OCRManager:
             raise ValueError(f"Moteur inconnu : {name}")
 
     # ── Conversions de langue ───────────────────────────────────────────────
+    def _tesseract_lang(self) -> str:
+        mapping = {
+            "en": "eng",
+            "ja": "jpn",
+            "zh": "chi_sim",
+            "fr": "fra",
+            "de": "deu",
+            "es": "spa",
+            "ko": "kor",
+        }
+        return mapping.get(self.language, "eng")
 
     def _paddle_lang(self) -> str:
         mapping = {"ja": "japan", "zh": "ch", "en": "en", "fr": "fr",
@@ -288,9 +299,9 @@ class OCRManager:
         img = Image.open(path)
         config = f"--psm {self.psm_mode} --oem 3"
 
-        # DICT : pas besoin de pandas
+        # DICT
         data = pytesseract.image_to_data(
-            img, lang=self.language, config=config,
+            img, lang=self._tesseract_lang(), config=config,
             output_type=pytesseract.Output.DICT)
 
         n = len(data["text"])

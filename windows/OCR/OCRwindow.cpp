@@ -3,7 +3,9 @@
 #include "../../core/OCRManager.h"
 #include "../../core/Exporter.h"
 #include "../../gui/canvas/ImageCanvas.h"
+#include "../../core/BubbleDetector.h"
 
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -49,6 +51,8 @@ OCRwindow::OCRwindow(Project* project, const OCRConfig& config, QWidget* parent)
     connect(ui->btnExportJSON,  &QPushButton::clicked, this, &OCRwindow::on_btnExportJSON_clicked);
     connect(ui->btnExportPNG,   &QPushButton::clicked, this, &OCRwindow::on_btnExportPNG_clicked);
     connect(ui->btnExportTXT,   &QPushButton::clicked, this, &OCRwindow::on_btnExportTXT_clicked);
+    connect(canvas, &ImageCanvas::addBubbleRequested,
+        this,   &OCRwindow::onAddBubbleRequested);
 
     if (!project->pages.isEmpty())
         loadPage(0);
@@ -372,4 +376,72 @@ void OCRwindow::on_btnExportTXT_clicked()
         ui->lblStatus->setText("TXT exporté → " + path);
     else
         QMessageBox::warning(this, "Erreur", "Échec de l'export TXT.");
+}
+
+void OCRwindow::onAddBubbleRequested(QPointF scenePos)
+{
+    ImagePage* page = currentPage();
+    if (!page) return;
+
+    QImage img(currentImagePath());
+    if (img.isNull()) return;
+
+    int x = qBound(0, (int)scenePos.x(), img.width()  - 1);
+    int y = qBound(0, (int)scenePos.y(), img.height() - 1);
+
+    ui->lblStatus->setText("Détection de la bulle en cours…");
+    qApp->processEvents();
+
+    // Détection de la région depuis le pixel cliqué
+    BubbleDetector detector;
+    QRect bubbleRect = detector.detectFromPoint(img, x, y);
+
+    if (bubbleRect.isEmpty()) {
+        ui->lblStatus->setText("Aucune bulle détectée à cet endroit.");
+        return;
+    }
+
+    // Crop → fichier temporaire
+    QImage crop = img.copy(bubbleRect);
+    QString tempPath = QDir::tempPath() + "/toontrad_crop_tmp.png";
+    crop.save(tempPath);
+
+    // OCR sur le crop
+    OCRManager ocr(this);
+    connect(&ocr, &OCRManager::errorOccurred, this, [this](const QString& msg) {
+        ui->lblStatus->setText("Erreur OCR : " + msg);
+    });
+
+    auto blocks = ocr.runOCR(tempPath, m_config);
+    QFile::remove(tempPath);
+
+    if (blocks.empty()) {
+        ui->lblStatus->setText("Aucun texte détecté dans la bulle.");
+        return;
+    }
+
+    // Calcule le prochain id disponible
+    int nextId = 1;
+    for (const auto& b : page->blocks)
+        nextId = qMax(nextId, b.id + 1);
+
+    // Réintègre les blocs dans l'espace image complet
+    for (auto& b : blocks) {
+        b.id = nextId++;
+
+        QPolygon offsetPoly;
+        for (const QPoint& pt : b.polygon)
+            offsetPoly << (pt + bubbleRect.topLeft());
+        b.polygon    = offsetPoly;
+        b.boundingBox = b.boundingBox.translated(bubbleRect.topLeft());
+
+        page->blocks.push_back(b);
+        addBlockWidget(b);
+    }
+
+    auto* canvas = qobject_cast<ImageCanvas*>(ui->imageCanvas);
+    if (canvas) canvas->setBlocks(page->blocks);
+
+    ui->lblStatus->setText(
+        QString("Bulle ajoutée : %1 bloc(s) détecté(s).").arg(blocks.size()));
 }
