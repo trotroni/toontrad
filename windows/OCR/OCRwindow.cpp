@@ -18,6 +18,7 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QDebug>
+#include <QFile>
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Constructeur

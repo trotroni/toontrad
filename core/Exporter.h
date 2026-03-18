@@ -1,25 +1,20 @@
 #ifndef EXPORTER_H
 #define EXPORTER_H
 
-#include <QImage>
 #include <QString>
 #include <vector>
-#include "TextBlock.h"
+#include "Bubble.h"
 
 class Exporter
 {
 public:
     Exporter() = default;
 
-    QImage renderImage(const QImage& base, const std::vector<TextBlock>& blocks);
-
-    bool exportJSON(const std::vector<TextBlock>& blocks,
-                    const QString& imageName,
-                    const QString& filePath);
-
-    bool exportTXT(const std::vector<TextBlock>& blocks,
-                   const QString& imageName,
-                   const QString& filePath);
+    // Export .txt par image — même format que exporter.py Python
+    // Retourne le chemin du fichier créé, ou "" en cas d'erreur
+    QString exportTxt(const std::vector<Bubble>& bubbles,
+                      const QString& imageName,
+                      const QString& outputFolder);
 };
 
 #endif // EXPORTER_H

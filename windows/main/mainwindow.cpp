@@ -1,378 +1,315 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
 #include "../../config.h"
-#include "../../core/models.h"
-#include "../../core/ProjectManager.h"
-#include "../OCR/OCRwindow.h"
-#include "../settings/SettingsWindow.h"
+#include "../../core/BubbleDetector.h"
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QProcess>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QApplication>
-#include <QFile>
-#include <QDebug>
-#ifdef Q_OS_MAC
-#include <sys/sysctl.h>
-#include <QNetworkRequest>
-#include <QJsonObject>
+#include <QFileInfo>
 #include <QDir>
-#include <QCoreApplication>
+#include <QDebug>
 
-#endif
-#ifdef Q_OS_LINUX
-#include <sys/sysinfo.h>
-#endif
-
-
-static const char* DARK_THEME = R"(
-QMainWindow, QDialog, QWidget { background-color: #1e1e2e; color: #cdd6f4; }
-QGroupBox { border: 1px solid #45475a; border-radius: 6px; margin-top: 8px; padding-top: 8px; color: #cdd6f4; }
-QGroupBox::title { subcontrol-origin: margin; left: 10px; }
-QListWidget { background: #181825; border: 1px solid #45475a; border-radius: 4px; color: #cdd6f4; }
-QListWidget::item:selected { background: #313244; }
-QListWidget::item:hover { background: #292938; }
-QPushButton { background: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 5px 10px; }
-QPushButton:hover { background: #45475a; }
-QPushButton:pressed { background: #585b70; }
-QPushButton:disabled { color: #585b70; }
-QComboBox { background: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 3px 6px; }
-QComboBox QAbstractItemView { background: #1e1e2e; color: #cdd6f4; selection-background-color: #313244; }
-QSlider::groove:horizontal { height: 4px; background: #45475a; border-radius: 2px; }
-QSlider::handle:horizontal { background: #89b4fa; width: 14px; height: 14px; margin: -5px 0; border-radius: 7px; }
-QSlider::sub-page:horizontal { background: #89b4fa; border-radius: 2px; }
-QLabel { color: #cdd6f4; }
-QScrollArea { border: none; }
-QTextEdit { background: #181825; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; }
-QLineEdit { background: #181825; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 3px; }
-QSpinBox { background: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; }
-QStatusBar { background: #181825; color: #888; }
-QFrame[frameShape="4"], QFrame[frameShape="5"] { color: #45475a; }
-)";
-
-static const char* LIGHT_THEME = R"(
-QMainWindow, QDialog, QWidget { background-color: #f5f5f5; color: #2d2d2d; }
-QGroupBox { border: 1px solid #cccccc; border-radius: 6px; margin-top: 8px; padding-top: 8px; }
-QListWidget { background: #ffffff; border: 1px solid #cccccc; border-radius: 4px; }
-QListWidget::item:selected { background: #dce8ff; }
-QPushButton { background: #e8e8e8; border: 1px solid #bbbbbb; border-radius: 4px; padding: 5px 10px; }
-QPushButton:hover { background: #d0d8ff; }
-QPushButton:disabled { color: #aaaaaa; }
-QComboBox { background: #ffffff; border: 1px solid #cccccc; border-radius: 4px; padding: 3px 6px; }
-QSlider::groove:horizontal { height: 4px; background: #cccccc; border-radius: 2px; }
-QSlider::handle:horizontal { background: #5B8CFF; width: 14px; height: 14px; margin: -5px 0; border-radius: 7px; }
-QSlider::sub-page:horizontal { background: #5B8CFF; border-radius: 2px; }
-QTextEdit { background: #ffffff; border: 1px solid #cccccc; border-radius: 4px; }
-QLineEdit { background: #ffffff; border: 1px solid #cccccc; border-radius: 4px; padding: 3px; }
-QStatusBar { background: #ebebeb; }
-)";
+// ─────────────────────────────────────────────────────────────────────────────
+//  Constructeur
+// ─────────────────────────────────────────────────────────────────────────────
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
     Config::load();
-    ProjectManager::instance().load();
 
-    auto engines = ToonTrad::engineList();
-    auto engDisp = ToonTrad::engineDisplayNames();
-    for (int i = 0; i < engines.size(); ++i)
-        ui->comboEngine->addItem(engDisp[i], engines[i]);
+    // ── ImageCanvas dans le scroll gauche ────────────────────────────────────
+    auto* canvas = new ImageCanvas(this);
+    auto* scrollLayout = new QVBoxLayout(ui->canvasContainer);
+    scrollLayout->setContentsMargins(0, 0, 0, 0);
+    scrollLayout->addWidget(canvas);
+    ui->canvasContainer->setLayout(scrollLayout);
 
-    ui->comboDevice->addItem("Auto (détection)", "auto");
-    ui->comboDevice->addItem("CPU uniquement",   "cpu");
-    detectGPUs();
+    // ── Layout scroll bulles ─────────────────────────────────────────────────
+    m_scrollWidget = ui->bubblesContent;
+    m_scrollLayout = qobject_cast<QVBoxLayout*>(m_scrollWidget->layout());
 
-    /*connect(ui->sliderVRAM, &QSlider::valueChanged, this, &MainWindow::on_sliderVRAM_valueChanged);
-    connect(ui->sliderRAM,  &QSlider::valueChanged, this, &MainWindow::on_sliderRAM_valueChanged);
+    // ── Connexions boutons ───────────────────────────────────────────────────
+    connect(ui->btnPrev,         &QPushButton::clicked, this, &MainWindow::onBtnPrev);
+    connect(ui->btnNext,         &QPushButton::clicked, this, &MainWindow::onBtnNext);
+    connect(ui->btnSave,         &QPushButton::clicked, this, &MainWindow::onBtnSave);
+    connect(ui->btnAdd,          &QPushButton::clicked, this, &MainWindow::onBtnAdd);
+    connect(ui->btnOpenFolder,   &QPushButton::clicked, this, &MainWindow::onBtnOpenFolder);
+    connect(ui->btnReloadConfig, &QPushButton::clicked, this, &MainWindow::onBtnReloadConfig);
 
-    connect(ui->btnNewProject,    &QPushButton::clicked, this, &MainWindow::on_btnNewProject_clicked);
-    connect(ui->btnRemoveProject, &QPushButton::clicked, this, &MainWindow::on_btnRemoveProject_clicked);
-    connect(ui->btnOpenProject,   &QPushButton::clicked, this, &MainWindow::on_btnOpenProject_clicked);
+    // ── Connexions canvas ────────────────────────────────────────────────────
+    connect(canvas, &ImageCanvas::bubbleDeleteRequested,
+            this,   &MainWindow::onBubbleDeleteRequested);
+    connect(canvas, &ImageCanvas::bubbleAddRequested,
+            this,   &MainWindow::onBubbleAddRequested);
 
-    connect(ui->listProjects, &QListWidget::itemDoubleClicked,
-            this, &MainWindow::on_listProjects_itemDoubleClicked);
-    connect(ui->listProjects, &QListWidget::currentRowChanged,
-            this, &MainWindow::on_listProjects_currentRowChanged);
-    connect(ui->comboDevice, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &MainWindow::on_comboDevice_currentIndexChanged);*/
+    // ── Chargement initial ───────────────────────────────────────────────────
+    if (!Config::folderPath.isEmpty())
+        loadImages(Config::folderPath);
+    else
+        log("Ouvrez un dossier pour commencer.");
 
-    // Détecte la RAM totale et ajuste le slider
-    {
-        int totalGb = 16; // valeur par défaut
-#ifdef Q_OS_MAC
-        int64_t mem = 0;
-        size_t len = sizeof(mem);
-        if (sysctlbyname("hw.memsize", &mem, &len, nullptr, 0) == 0)
-            totalGb = static_cast<int>(mem / (1024LL * 1024 * 1024));
-#elif defined(Q_OS_LINUX)
-        struct sysinfo si;
-        if (sysinfo(&si) == 0)
-            totalGb = static_cast<int>(si.totalram * si.mem_unit / (1024LL * 1024 * 1024));
-#endif
-        ui->sliderRAM->setMaximum(qMax(totalGb, 4));
-        ui->sliderRAM->setValue(qMin(4, totalGb));
-        ui->lblRAMVal->setText(QString::number(ui->sliderRAM->value()) + " GB");
-    }
-
-    refreshProjectList();
-    statusBar()->showMessage("Prêt");
-
-    m_lblVersion = new QLabel(QString("v%1").arg(Config::VERSION_STR));
-    m_lblVersion->setStyleSheet("color: #888; padding: 0 8px;");
-    statusBar()->addPermanentWidget(m_lblVersion);
-
-    runPipUpdate();
-    checkLatestVersion();
-}
-void MainWindow::runPipUpdate()
-{
-    // Cherche requirements.txt à côté de l'exe
-    QString reqPath = QCoreApplication::applicationDirPath() + "/../../../requirements.txt";
-    reqPath = QDir::cleanPath(reqPath);
-    if (!QFile::exists(reqPath)) return;
-
-    QProcess* proc = new QProcess(this);
-    proc->setProcessChannelMode(QProcess::MergedChannels);
-    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [proc](int code, QProcess::ExitStatus) {
-        qDebug() << "pip update terminé, code:" << code;
-        proc->deleteLater();
-    });
-    proc->start(Config::pythonBin, {
-        "-m", "pip", "install", "-r", reqPath,
-        "--upgrade", "--quiet"
-    });
+    updateNavButtons();
 }
 
-void MainWindow::checkLatestVersion()
-{
-    QNetworkRequest req(QUrl("https://api.github.com/repos/trotroni/toontrad/releases/latest"));
-    req.setRawHeader("Accept", "application/vnd.github+json");
-    req.setRawHeader("User-Agent", "ToonTrad");
-
-    QNetworkReply* reply = m_network.get(req);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError) {
-            m_lblVersion->setText(QString("v%1").arg(Config::VERSION_STR));
-            return;
-        }
-
-        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        if (!doc.isObject()) return;
-
-        // GitHub retourne "v2.1.0" → on enlève le "v"
-        QString latest = doc.object()["tag_name"].toString();
-        if (latest.startsWith("v")) latest = latest.mid(1);
-
-        QString current = Config::VERSION_STR;
-        if (latest == current)
-            m_lblVersion->setText(QString("v%1 (latest)").arg(current));
-        else
-            m_lblVersion->setText(
-                QString("v%1  ⬆ v%2 dispo").arg(current, latest));
-    });
-}
 MainWindow::~MainWindow()
 {
     Config::save();
-    ProjectManager::instance().save();
     delete ui;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-void MainWindow::detectGPUs()
+QString MainWindow::currentImagePath() const
 {
-    ui->lblGPUInfo->setText("Détection du matériel...");
-
-    QString script = R"(
-import json, sys
-try:
-    import torch
-    gpus = []
-    if torch.cuda.is_available():
-        for i in range(torch.cuda.device_count()):
-            p = torch.cuda.get_device_properties(i)
-            gpus.append({"id": i, "name": p.name, "vram_gb": round(p.total_memory/1e9,1)})
-    print(json.dumps({"cuda": torch.cuda.is_available(), "gpus": gpus}))
-except Exception as e:
-    print(json.dumps({"cuda": False, "gpus": [], "error": str(e)}))
-)";
-
-    QProcess* proc = new QProcess(this);
-    connect(proc, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [this, proc](int /*code*/, QProcess::ExitStatus) {
-        QByteArray out = proc->readAllStandardOutput();
-        proc->deleteLater();
-
-        QJsonDocument doc = QJsonDocument::fromJson(out);
-        if (!doc.isObject()) {
-            ui->lblGPUInfo->setText("⚠ PyTorch non installé — mode CPU uniquement");
-            return;
-        }
-        QJsonObject info = doc.object();
-        bool cuda = info["cuda"].toBool();
-
-        if (!cuda) {
-            ui->lblGPUInfo->setText("Pas de GPU CUDA détecté — CPU uniquement");
-            return;
-        }
-
-        QString gpuInfo = "GPU(s) disponibles :\n";
-        for (const QJsonValue& v : info["gpus"].toArray()) {
-            QJsonObject g = v.toObject();
-            QString entry = QString("  GPU %1 : %2 (%3 GB VRAM)")
-                                .arg(g["id"].toInt())
-                                .arg(g["name"].toString())
-                                .arg(g["vram_gb"].toDouble());
-            gpuInfo += entry + "\n";
-
-            ui->comboDevice->addItem(
-                QString("GPU %1 — %2 (%3 GB)")
-                    .arg(g["id"].toInt())
-                    .arg(g["name"].toString())
-                    .arg(g["vram_gb"].toDouble()),
-                QString("cuda:%1").arg(g["id"].toInt())
-            );
-        }
-        ui->lblGPUInfo->setText(gpuInfo.trimmed());
-    });
-
-    proc->start(Config::pythonBin, {"-c", script});
+    if (m_imageList.isEmpty()) return {};
+    if (m_currentIndex < 0 || m_currentIndex >= m_imageList.size()) return {};
+    return m_imageList[m_currentIndex];
 }
 
-void MainWindow::refreshProjectList()
+void MainWindow::log(const QString& msg)
 {
-    ui->listProjects->clear();
-    for (const auto& p : ProjectManager::instance().projects()) {
-        auto* item = new QListWidgetItem(p.name);
-        item->setData(Qt::UserRole, p.rootPath);
-        item->setToolTip(p.rootPath);
-        ui->listProjects->addItem(item);
+    ui->console->append(msg);
+}
+
+void MainWindow::recalculateIds()
+{
+    for (int i = 0; i < (int)m_bubbles.size(); ++i)
+        m_bubbles[i].id = i + 1;
+}
+
+void MainWindow::syncBubbles()
+{
+    for (auto* w : m_bubbleWidgets) {
+        for (auto& b : m_bubbles) {
+            if (b.id == w->bubbleId()) {
+                w->syncToBubble(b);
+                break;
+            }
+        }
     }
-    ui->btnOpenProject->setEnabled(false);
 }
 
-void MainWindow::on_btnNewProject_clicked()
+// ─────────────────────────────────────────────────────────────────────────────
+//  Chargement images
+// ─────────────────────────────────────────────────────────────────────────────
+
+void MainWindow::loadImages(const QString& folderPath)
 {
-    QString path = QFileDialog::getExistingDirectory(
-        this, "Sélectionner le dossier du projet", QDir::homePath());
+    QDir dir(folderPath);
+    QStringList filters = {"*.jpg", "*.jpeg", "*.png", "*.bmp", "*.webp"};
+    QStringList files   = dir.entryList(filters, QDir::Files, QDir::Name);
+
+    if (files.isEmpty()) {
+        QMessageBox::warning(this, "Dossier vide", "Aucune image trouvée dans ce dossier.");
+        return;
+    }
+
+    m_imageList.clear();
+    for (const QString& f : files)
+        m_imageList << dir.absoluteFilePath(f);
+
+    m_currentIndex = 0;
+    Config::folderPath = folderPath;
+    Config::save();
+
+    log(QString("%1 image(s) chargée(s) depuis %2").arg(files.size()).arg(folderPath));
+    loadCurrentImage();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Chargement image courante — identique à load_current_image() Python
+// ─────────────────────────────────────────────────────────────────────────────
+
+void MainWindow::loadCurrentImage()
+{
+    QString path = currentImagePath();
     if (path.isEmpty()) return;
 
-    ProjectManager::instance().addProject(path);
-    refreshProjectList();
-    statusBar()->showMessage("Projet ajouté : " + path, 3000);
-}
+    ui->lblImageName->setText(QFileInfo(path).fileName());
+    statusBar()->showMessage("Détection en cours…");
+    qApp->processEvents();
 
-void MainWindow::on_btnRemoveProject_clicked()
-{
-    auto* item = ui->listProjects->currentItem();
-    if (!item) return;
-
-    QString path = item->data(Qt::UserRole).toString();
-    auto btn = QMessageBox::question(this, "Supprimer",
-        "Retirer le projet de la liste ?\n(les fichiers ne seront pas supprimés)");
-    if (btn != QMessageBox::Yes) return;
-
-    ProjectManager::instance().removeProject(path);
-    refreshProjectList();
-}
-
-void MainWindow::on_listProjects_currentRowChanged(int row)
-{
-    ui->btnOpenProject->setEnabled(row >= 0);
-}
-
-void MainWindow::on_listProjects_itemDoubleClicked()
-{
-    openSelectedProject();
-}
-
-void MainWindow::on_btnOpenProject_clicked()
-{
-    openSelectedProject();
-}
-
-void MainWindow::openSelectedProject()
-{
-    auto* item = ui->listProjects->currentItem();
-    if (!item) return;
-
-    QString path = item->data(Qt::UserRole).toString();
-
-    if (m_openWindows.contains(path) && !m_openWindows[path].isNull()) {
-        m_openWindows[path]->raise();
-        m_openWindows[path]->activateWindow();
+    // Vérification Python
+    QString pyErr;
+    if (!BubbleDetector::checkAvailable(&pyErr)) {
+        QMessageBox::critical(this, "Python introuvable", pyErr);
+        statusBar()->showMessage("Erreur Python");
         return;
     }
 
-    auto& projects = ProjectManager::instance().projects();
-    for (auto& p : projects) {
-        if (p.rootPath != path) continue;
+    // Détection via QProcess → detect.py
+    BubbleDetector detector(this);
+    connect(&detector, &BubbleDetector::errorOccurred, this, [this](const QString& msg) {
+        QMessageBox::critical(this, "Erreur détection", msg);
+        log("Erreur : " + msg);
+    });
 
-        OCRwindow* w = new OCRwindow(&p, currentConfig(), nullptr);
-        w->setAttribute(Qt::WA_DeleteOnClose);
+    m_bubbles = detector.run(path);
+    log(QString("%1 bulle(s) détectée(s) — %2")
+            .arg(m_bubbles.size())
+            .arg(QFileInfo(path).fileName()));
 
-        connect(w, &QObject::destroyed, this, [this, path]() {
-            m_openWindows.remove(path);
-        });
+    // Mise à jour canvas
+    auto* canvas = findChild<ImageCanvas*>();
+    if (canvas) {
+        canvas->setImage(QPixmap(path));
+        canvas->setBubbles(m_bubbles);
+    }
 
-        m_openWindows[path] = w;
-        w->show();
-        return;
+    buildRightPanel();
+    updateNavButtons();
+    statusBar()->showMessage(QString("Page %1 / %2")
+                                 .arg(m_currentIndex + 1)
+                                 .arg(m_imageList.size()));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Panneau droit — identique à build_right_panel() Python
+// ─────────────────────────────────────────────────────────────────────────────
+
+void MainWindow::buildRightPanel()
+{
+    // Supprime les anciens widgets
+    for (auto* w : m_bubbleWidgets)
+        w->deleteLater();
+    m_bubbleWidgets.clear();
+
+    // Supprime tous les items sauf le spacer final
+    while (m_scrollLayout->count() > 1) {
+        QLayoutItem* item = m_scrollLayout->takeAt(0);
+        if (item->widget()) item->widget()->deleteLater();
+        delete item;
+    }
+
+    // Crée un BubbleWidget par bulle
+    for (const auto& b : m_bubbles) {
+        auto* w = new BubbleWidget(b, m_scrollWidget);
+        connect(w, &BubbleWidget::deleteRequested,
+                this, &MainWindow::onBubbleDeleteRequested);
+        connect(w, &BubbleWidget::textChanged,
+                this, &MainWindow::onTextChanged);
+
+        // Insère avant le spacer
+        m_scrollLayout->insertWidget(m_scrollLayout->count() - 1, w);
+        m_bubbleWidgets.append(w);
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Navigation
+// ─────────────────────────────────────────────────────────────────────────────
 
-OCRConfig MainWindow::currentConfig() const
+void MainWindow::updateNavButtons()
 {
-    OCRConfig c = m_config;
-    c.engine          = ui->comboEngine->currentData().toString();
-    c.device          = ui->comboDevice->currentData().toString();
-    c.gpuMemFraction  = ui->sliderVRAM->value() / 100.0;
-    // Convertit GB → fraction (Python attend une fraction de la RAM totale)
-    {
-        double totalGb = qMax(ui->sliderRAM->maximum(), 1);
-        c.ramFraction  = ui->sliderRAM->value() / totalGb;
+    ui->btnPrev->setEnabled(m_currentIndex > 0);
+    ui->btnNext->setEnabled(m_currentIndex < m_imageList.size() - 1);
+}
+
+void MainWindow::onBtnPrev()
+{
+    if (m_currentIndex > 0) {
+        m_currentIndex--;
+        loadCurrentImage();
     }
-
-    if (c.device.startsWith("cuda:"))
-        c.gpuId = c.device.mid(5).toInt();
-    return c;
 }
 
-void MainWindow::on_sliderVRAM_valueChanged(int value)
+void MainWindow::onBtnNext()
 {
-    ui->lblVRAMVal->setText(QString::number(value) + "%");
+    if (m_currentIndex < m_imageList.size() - 1) {
+        m_currentIndex++;
+        loadCurrentImage();
+    }
 }
 
-void MainWindow::on_sliderRAM_valueChanged(int value)
+// ─────────────────────────────────────────────────────────────────────────────
+//  Actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+void MainWindow::onBtnOpenFolder()
 {
-    ui->lblRAMVal->setText(QString::number(value) + " GB");
+    QString path = QFileDialog::getExistingDirectory(
+        this, "Sélectionner le dossier d'images", QDir::homePath());
+    if (!path.isEmpty())
+        loadImages(path);
 }
 
-void MainWindow::on_comboDevice_currentIndexChanged(int /*index*/)
+void MainWindow::onBtnSave()
 {
-    QString dev = ui->comboDevice->currentData().toString();
-    bool gpuSelected = dev.startsWith("cuda:");
-    ui->sliderVRAM->setEnabled(gpuSelected);
-    ui->lblVRAM->setEnabled(gpuSelected);
-    ui->lblVRAMVal->setEnabled(gpuSelected);
-    ui->sliderRAM->setEnabled(!gpuSelected || dev == "cpu");
+    syncBubbles();
+
+    QString imageName = QFileInfo(currentImagePath()).fileName();
+    Exporter exp;
+    QString saved = exp.exportTxt(m_bubbles, imageName, Config::outputFolder);
+
+    if (!saved.isEmpty()) {
+        log("Sauvegardé : " + saved);
+        statusBar()->showMessage("Sauvegardé → " + saved, 3000);
+    } else {
+        QMessageBox::warning(this, "Erreur", "Échec de la sauvegarde.");
+    }
 }
 
-void MainWindow::on_btnSettings_clicked()
+void MainWindow::onBtnAdd()
 {
-    SettingsWindow dlg(currentConfig(), this);
-    if (dlg.exec() == QDialog::Accepted)
-        m_config = dlg.config();
+    auto* canvas = findChild<ImageCanvas*>();
+    if (canvas) {
+        canvas->setAddMode(true);
+        log("Mode ajout activé : glisser pour sélectionner une bulle");
+    }
 }
 
-void MainWindow::applyTheme()
+void MainWindow::onBtnReloadConfig()
 {
-    qApp->setStyleSheet("");
+    Config::load();
+    log("Configuration rechargée");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Événements canvas
+// ─────────────────────────────────────────────────────────────────────────────
+
+void MainWindow::onBubbleDeleteRequested(int id)
+{
+    m_bubbles.erase(
+        std::remove_if(m_bubbles.begin(), m_bubbles.end(),
+                       [id](const Bubble& b) { return b.id == id; }),
+        m_bubbles.end());
+
+    recalculateIds();
+    buildRightPanel();
+
+    auto* canvas = findChild<ImageCanvas*>();
+    if (canvas) canvas->setBubbles(m_bubbles);
+
+    log(QString("Bulle %1 supprimée").arg(id));
+}
+
+void MainWindow::onBubbleAddRequested(QRect rect)
+{
+    int nextId = m_bubbles.empty() ? 1 : m_bubbles.back().id + 1;
+    Bubble newBubble(nextId, rect);
+    m_bubbles.push_back(newBubble);
+
+    recalculateIds();
+    buildRightPanel();
+
+    auto* canvas = findChild<ImageCanvas*>();
+    if (canvas) canvas->setBubbles(m_bubbles);
+
+    log(QString("Bulle %1 ajoutée à %2,%3,%4,%5")
+            .arg(nextId)
+            .arg(rect.x()).arg(rect.y())
+            .arg(rect.width()).arg(rect.height()));
+}
+
+void MainWindow::onTextChanged()
+{
+    // Sync live vers m_bubbles puis refresh canvas (label texte sur image)
+    syncBubbles();
+    auto* canvas = findChild<ImageCanvas*>();
+    if (canvas) canvas->setBubbles(m_bubbles);
 }

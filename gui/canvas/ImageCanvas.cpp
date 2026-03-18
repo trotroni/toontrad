@@ -1,149 +1,189 @@
 #include "ImageCanvas.h"
-#include <QScrollBar>
-#include <QMenu>
-#include <QAction>
+#include <QPainter>
+#include <QColor>
 #include <QDebug>
 
 ImageCanvas::ImageCanvas(QWidget* parent)
-    : QGraphicsView(parent)
-    , m_scene(new QGraphicsScene(this))
+    : QLabel(parent)
 {
-    setScene(m_scene);
-    setDragMode(QGraphicsView::ScrollHandDrag);
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-    setRenderHint(QPainter::Antialiasing);
-    setContextMenuPolicy(Qt::DefaultContextMenu);
-    setBackgroundBrush(QColor(40, 40, 40));
+    setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    setScaledContents(false);
+    setMouseTracking(true);
 }
 
-void ImageCanvas::setImage(const QImage& image)
+// ─────────────────────────────────────────────────────────────────────────────
+//  API publique
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ImageCanvas::setImage(const QPixmap& pixmap)
 {
-    m_scene->clear();
-    m_items.clear();
-    m_pixmapItem = nullptr;
-
-    if (image.isNull()) return;
-
-    m_pixmapItem = m_scene->addPixmap(QPixmap::fromImage(image));
-    m_scene->setSceneRect(image.rect());
-
-    // fitInView ici ne sert que si le widget est déjà visible et dimensionné
-    if (!size().isEmpty())
-        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-}
-
-void ImageCanvas::resizeEvent(QResizeEvent* event)
-{
-    QGraphicsView::resizeEvent(event);
-
-    // Re-fit à chaque fois que le widget change de taille (y compris au 1er affichage)
-    if (m_pixmapItem && !m_scene->sceneRect().isEmpty())
-        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-}
-
-QColor ImageCanvas::colorForConfidence(double conf) const
-{
-    if (conf >= 0.8) return QColor(0, 200, 80, 180);
-    if (conf >= 0.5) return QColor(255, 165, 0, 180);
-    return QColor(220, 50, 50, 180);
-}
-
-void ImageCanvas::setBlocks(const std::vector<TextBlock>& blocks)
-{
-    QList<QGraphicsItem*> all = m_scene->items();
-    for (auto* it : all)
-        if (dynamic_cast<QGraphicsPixmapItem*>(it) == nullptr)
-            m_scene->removeItem(it);
-    m_items.clear();
-
-    for (const auto& b : blocks) {
-        QColor color = colorForConfidence(b.confidence);
-        QPen   pen(color, 2);
-        QBrush brush(QColor(color.red(), color.green(), color.blue(), 40));
-
-        QGraphicsItem* item = nullptr;
-        if (b.polygon.size() >= 3) {
-            auto* poly = m_scene->addPolygon(QPolygonF(b.polygon), pen, brush);
-            poly->setData(0, b.id);
-            item = poly;
-        } else {
-            auto* rect = m_scene->addRect(b.boundingBox, pen, brush);
-            rect->setData(0, b.id);
-            item = rect;
-        }
-
-        QGraphicsTextItem* lbl = m_scene->addText(QString::number(b.id));
-        lbl->setDefaultTextColor(color);
-        lbl->setPos(b.boundingBox.topLeft() + QPoint(2, 2));
-        lbl->setData(0, b.id);
-
-        m_items[b.id] = item;
+    m_pixmap = pixmap;
+    // Applique le zoom courant
+    if (!m_pixmap.isNull()) {
+        QPixmap scaled = m_pixmap.scaled(
+            m_pixmap.size() * m_zoom,
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation);
+        QLabel::setPixmap(scaled);
+        adjustSize();
     }
+    update();
 }
 
-void ImageCanvas::clearBlocks()
+void ImageCanvas::setBubbles(const std::vector<Bubble>& bubbles)
 {
-    QList<QGraphicsItem*> all = m_scene->items();
-    for (auto* it : all)
-        if (!dynamic_cast<QGraphicsPixmapItem*>(it))
-            m_scene->removeItem(it);
-    m_items.clear();
+    m_bubbles = bubbles;
+    update();
 }
 
-void ImageCanvas::removeBlock(int id)
+void ImageCanvas::clearBubbles()
 {
-    QList<QGraphicsItem*> all = m_scene->items();
-    for (auto* it : all) {
-        if (it->data(0).toInt() == id)
-            m_scene->removeItem(it);
-    }
-    m_items.remove(id);
+    m_bubbles.clear();
+    update();
 }
+
+void ImageCanvas::setAddMode(bool enabled)
+{
+    m_addMode   = enabled;
+    m_selecting = false;
+    setCursor(enabled ? Qt::CrossCursor : Qt::ArrowCursor);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Conversions coordonnées
+// ─────────────────────────────────────────────────────────────────────────────
+
+QPoint ImageCanvas::toImage(const QPoint& widgetPos) const
+{
+    return QPoint(
+        static_cast<int>(widgetPos.x() / m_zoom),
+        static_cast<int>(widgetPos.y() / m_zoom)
+    );
+}
+
+QPoint ImageCanvas::toWidget(const QPoint& imagePos) const
+{
+    return QPoint(
+        static_cast<int>(imagePos.x() * m_zoom),
+        static_cast<int>(imagePos.y() * m_zoom)
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Zoom — Ctrl + molette (identique au Python)
+// ─────────────────────────────────────────────────────────────────────────────
 
 void ImageCanvas::wheelEvent(QWheelEvent* event)
 {
-    double factor = event->angleDelta().y() > 0 ? 1.15 : 1.0/1.15;
-    scale(factor, factor);
+    if (event->modifiers() == Qt::ControlModifier) {
+        double factor = event->angleDelta().y() > 0 ? 1.1 : (1.0 / 1.1);
+        m_zoom = qBound(0.1, m_zoom * factor, 10.0);
+        setImage(m_pixmap); // redessine avec nouveau zoom
+        event->accept();
+    } else {
+        event->ignore(); // laisse le QScrollArea gérer le scroll normal
+    }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Souris
+// ─────────────────────────────────────────────────────────────────────────────
 
 void ImageCanvas::mousePressEvent(QMouseEvent* event)
 {
+    QPoint imgPos = toImage(event->pos());
+
+    // ── Clic droit : suppression bulle ───────────────────────────────────────
     if (event->button() == Qt::RightButton) {
-        QPointF scenePos = mapToScene(event->pos());
-        QGraphicsItem* hit = m_scene->itemAt(scenePos, transform());
-        if (hit && hit->data(0).isValid()) {
-            int id = hit->data(0).toInt();
-            QMenu menu(this);
-            QAction* del = menu.addAction(
-                QString("Supprimer la zone #%1").arg(id));
-            if (menu.exec(event->globalPosition().toPoint()) == del)
-                emit blockRightClicked(id);
-            return;
+        for (const auto& b : m_bubbles) {
+            if (b.rect.contains(imgPos)) {
+                emit bubbleDeleteRequested(b.id);
+                return;
+            }
         }
     }
-    QGraphicsView::mousePressEvent(event);
+
+    // ── Clic gauche en mode ajout : début du drag ────────────────────────────
+    if (m_addMode && event->button() == Qt::LeftButton) {
+        m_selecting   = true;
+        m_dragStart   = imgPos;
+        m_dragCurrent = imgPos;
+    }
 }
 
-void ImageCanvas::mousePressEvent(QMouseEvent* event)
+void ImageCanvas::mouseMoveEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::RightButton) {
-        QPointF scenePos = mapToScene(event->pos());
-        QGraphicsItem* hit = m_scene->itemAt(scenePos, transform());
-
-        QMenu menu(this);
-
-        if (hit && hit->data(0).isValid()) {
-            int id = hit->data(0).toInt();
-            QAction* del = menu.addAction(
-                QString("Supprimer la zone #%1").arg(id));
-            if (menu.exec(event->globalPosition().toPoint()) == del)
-                emit blockRightClicked(id);
-        } else {
-            QAction* add = menu.addAction("➕ Ajouter une bulle ici");
-            if (menu.exec(event->globalPosition().toPoint()) == add)
-                emit addBubbleRequested(scenePos);
-        }
-        return;
+    if (m_selecting) {
+        m_dragCurrent = toImage(event->pos());
+        update(); // redessine le rectangle de sélection en cours
     }
-    QGraphicsView::mousePressEvent(event);
+}
+
+void ImageCanvas::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (m_selecting && event->button() == Qt::LeftButton) {
+        m_selecting = false;
+
+        int x1 = qMin(m_dragStart.x(), m_dragCurrent.x());
+        int y1 = qMin(m_dragStart.y(), m_dragCurrent.y());
+        int x2 = qMax(m_dragStart.x(), m_dragCurrent.x());
+        int y2 = qMax(m_dragStart.y(), m_dragCurrent.y());
+        int w  = x2 - x1;
+        int h  = y2 - y1;
+
+        if (w > 5 && h > 5) // ignore les micro-clics
+            emit bubbleAddRequested(QRect(x1, y1, w, h));
+
+        setAddMode(false);
+        update();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Dessin — rectangles bulles (identique au Python : vert outer, rouge inner)
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ImageCanvas::paintEvent(QPaintEvent* event)
+{
+    // Dessine d'abord l'image (QLabel)
+    QLabel::paintEvent(event);
+
+    if (m_pixmap.isNull()) return;
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // ── Bulles existantes ────────────────────────────────────────────────────
+    for (const auto& b : m_bubbles) {
+        // Rectangle externe — vert (comme Python)
+        QRect outerW = QRect(toWidget(b.rect.topLeft()),
+                             toWidget(b.rect.bottomRight()));
+        painter.setPen(QPen(QColor(0, 255, 0), 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(outerW);
+
+        // Rectangle interne — rouge (comme Python)
+        QRect innerW = QRect(toWidget(b.innerRect.topLeft()),
+                             toWidget(b.innerRect.bottomRight()));
+        painter.setPen(QPen(QColor(255, 0, 0), 1));
+        painter.drawRect(innerW);
+
+        // Label ID : texte au-dessus du rect (comme Python)
+        QString label = QString("%1: %2")
+                            .arg(b.id)
+                            .arg(b.trad.isEmpty()
+                                     ? b.raw.left(30)
+                                     : b.trad.left(30));
+        painter.setPen(QColor(0, 255, 0));
+        painter.drawText(outerW.topLeft() + QPoint(0, -4), label);
+    }
+
+    // ── Rectangle de sélection en cours (mode ajout) ─────────────────────────
+    if (m_selecting) {
+        QRect selW = QRect(toWidget(m_dragStart),
+                           toWidget(m_dragCurrent)).normalized();
+        painter.setPen(QPen(QColor(0, 0, 255, 180), 2, Qt::DashLine));
+        painter.setBrush(QColor(0, 0, 255, 30));
+        painter.drawRect(selW);
+    }
 }

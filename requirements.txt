@@ -8,6 +8,7 @@
 
 torch>=2.0.0
 torchvision>=0.15.0
+opencv-python>=4.8.0
 
 # Moteurs OCR (installer ceux dont vous avez besoin)
 paddlepaddle>=2.5.0       # PaddleOCR GPU : paddlepaddle-gpu

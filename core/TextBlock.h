@@ -12,6 +12,7 @@ class TextBlock
 public:
     int      id             = 0;
     QRect    boundingBox;
+    QRect innerRect;
     QPolygon polygon;
     double   confidence     = 1.0;
     QString  originalText;

@@ -1,42 +1,59 @@
 #ifndef IMAGECANVAS_H
 #define IMAGECANVAS_H
 
-#include <QGraphicsView>
-#include <QGraphicsRectItem>
-#include <QGraphicsPolygonItem>
-#include <QWheelEvent>
+#include <QLabel>
+#include <QPixmap>
 #include <QMouseEvent>
-#include <QMap>
+#include <QWheelEvent>
+#include <QPaintEvent>
 #include <vector>
-#include "../../core/TextBlock.h"
+#include "../core/Bubble.h"
 
-
-class ImageCanvas : public QGraphicsView
+class ImageCanvas : public QLabel
 {
     Q_OBJECT
 
 public:
     explicit ImageCanvas(QWidget* parent = nullptr);
 
-    void setImage(const QImage& image);
-    void setBlocks(const std::vector<TextBlock>& blocks);
-    void clearBlocks();
-    void removeBlock(int id);
+    void setImage(const QPixmap& pixmap);
+    void setBubbles(const std::vector<Bubble>& bubbles);
+    void clearBubbles();
 
-signals:
-    void blockRightClicked(int id);
-    void addBubbleRequested(QPointF scenePos);
+    double zoom() const { return m_zoom; }
+
+    signals:
+        // Clic droit sur une bulle → suppression
+        void bubbleDeleteRequested(int id);
+
+    // Drag terminé en mode ajout → nouveau rect sélectionné
+    void bubbleAddRequested(QRect rect);
+
+public slots:
+    void setAddMode(bool enabled);
 
 protected:
     void wheelEvent(QWheelEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 private:
-    QGraphicsScene* m_scene;
-    QGraphicsPixmapItem*    m_pixmapItem = nullptr;
-    QMap<int, QGraphicsItem*> m_items;
-    QColor colorForConfidence(double conf) const;
+    double              m_zoom      = 1.0;
+    bool                m_addMode   = false;
+
+    // Drag sélection
+    bool                m_selecting = false;
+    QPoint              m_dragStart;
+    QPoint              m_dragCurrent;
+
+    QPixmap             m_pixmap;
+    std::vector<Bubble> m_bubbles;
+
+    // Convertit coordonnées widget → coordonnées image
+    QPoint toImage(const QPoint& widgetPos) const;
+    QPoint toWidget(const QPoint& imagePos) const;
 };
 
 #endif // IMAGECANVAS_H

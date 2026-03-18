@@ -2,13 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QProcess>
-#include <QPointer>
-#include <QMap>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QLabel>
-#include "../../core/OCRConfig.h"
+#include <QScrollArea>
+#include <QVBoxLayout>
+#include <QStringList>
+#include <vector>
+#include "../../core/Bubble.h"
+#include "../../core/Exporter.h"
+#include "../../gui/canvas/ImageCanvas.h"
+#include "../../gui/widgets/BubbleWidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,38 +21,44 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget* parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
-    OCRConfig currentConfig() const;
-
 private slots:
-    void on_btnNewProject_clicked();
-    void on_btnRemoveProject_clicked();
-    void on_btnOpenProject_clicked();
-    void on_btnSettings_clicked();
-    void on_listProjects_itemDoubleClicked();
-    void on_listProjects_currentRowChanged(int row);
-    void on_sliderVRAM_valueChanged(int value);
-    void on_sliderRAM_valueChanged(int value);
-    void on_comboDevice_currentIndexChanged(int index);
+    void onBtnPrev();
+    void onBtnNext();
+    void onBtnSave();
+    void onBtnAdd();
+    void onBtnOpenFolder();
+    void onBtnReloadConfig();
+
+    void onBubbleDeleteRequested(int id);
+    void onBubbleAddRequested(QRect rect);
+    void onTextChanged();
 
 private:
     Ui::MainWindow* ui;
-    OCRConfig m_config;
 
-    void refreshProjectList();
-    void detectGPUs();
-    void applyTheme();
-    void openSelectedProject();
+    // État
+    QStringList          m_imageList;
+    int                  m_currentIndex = 0;
+    std::vector<Bubble>  m_bubbles;
 
-    QMap<QString, QPointer<QMainWindow>> m_openWindows;
+    // Widgets dynamiques panneau droit
+    QWidget*             m_scrollWidget  = nullptr;
+    QVBoxLayout*         m_scrollLayout  = nullptr;
+    QList<BubbleWidget*> m_bubbleWidgets;
 
-    void checkLatestVersion();
-    void runPipUpdate();
+    // Helpers
+    void loadImages(const QString& folderPath);
+    void loadCurrentImage();
+    void buildRightPanel();
+    void updateNavButtons();
+    void syncBubbles();           // lit tous les BubbleWidget → m_bubbles
+    void recalculateIds();
+    void log(const QString& msg);
 
-    QLabel*               m_lblVersion = nullptr;
-    QNetworkAccessManager m_network;
+    QString currentImagePath() const;
 };
 
 #endif // MAINWINDOW_H

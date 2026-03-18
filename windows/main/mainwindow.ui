@@ -3,282 +3,106 @@
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>900</width>
-    <height>620</height>
-   </rect>
+   <rect><x>0</x><y>0</y><width>1400</width><height>900</height></rect>
   </property>
   <property name="windowTitle">
    <string>ToonTrad</string>
   </property>
+
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="rootLayout">
+
+    <!-- ══ CANVAS GAUCHE (scrollable) ══ -->
     <item>
-     <widget class="QFrame" name="leftPanel">
-      <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
+     <widget class="QScrollArea" name="imageScroll">
+      <property name="widgetResizable"><bool>true</bool></property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>2</horstretch>
+       </sizepolicy>
       </property>
-      <layout class="QVBoxLayout" name="leftLayout">
-       <item>
-        <widget class="QLabel" name="lblProjects">
-         <property name="styleSheet">
-          <string>font-weight: bold; font-size: 13px; padding: 4px;</string>
-         </property>
-         <property name="text">
-          <string>PROJETS</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListWidget" name="listProjects">
-         <property name="alternatingRowColors">
-          <bool>true</bool>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout">
-         <item>
-          <widget class="QPushButton" name="btnNewProject">
-           <property name="text">
-            <string>+ Nouveau projet</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnRemoveProject">
-           <property name="text">
-            <string>Supprimer</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
+      <!-- ImageCanvas promu via Qt Designer -->
+      <widget class="QWidget" name="canvasContainer"/>
      </widget>
     </item>
+
+    <!-- ══ PANNEAU DROIT ══ -->
     <item>
      <widget class="QFrame" name="rightPanel">
-      <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+       </sizepolicy>
       </property>
+      <property name="minimumWidth"><number>340</number></property>
+      <property name="maximumWidth"><number>420</number></property>
+      <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+
       <layout class="QVBoxLayout" name="rightLayout">
+
+       <!-- Nom image courante -->
+       <item>
+        <widget class="QLabel" name="lblImageName">
+         <property name="text"><string>—</string></property>
+         <property name="alignment"><set>Qt::AlignCenter</set></property>
+         <property name="styleSheet">
+          <string>font-weight: bold; padding: 4px;</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- Scroll bulles -->
+       <item>
+        <widget class="QScrollArea" name="bubblesScroll">
+         <property name="widgetResizable"><bool>true</bool></property>
+         <widget class="QWidget" name="bubblesContent">
+          <layout class="QVBoxLayout" name="bubblesLayout">
+           <item>
+            <spacer>
+             <property name="orientation"><enum>Qt::Vertical</enum></property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+
+       <!-- Boutons navigation + actions -->
        <item>
         <layout class="QHBoxLayout">
-         <item>
-          <widget class="QLabel" name="lblConfig">
-           <property name="styleSheet">
-            <string>font-weight: bold; font-size: 13px; padding: 4px;</string>
-           </property>
-           <property name="text">
-            <string>CONFIGURATION OCR</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer>
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
+         <item><widget class="QPushButton" name="btnPrev"><property name="text"><string>⬅ Précédent</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnNext"><property name="text"><string>Suivant ➡</string></property></widget></item>
         </layout>
        </item>
+
        <item>
-        <widget class="QGroupBox" name="groupEngine">
-         <property name="title">
-          <string>Moteur OCR</string>
-         </property>
-         <layout class="QFormLayout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Moteur :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboEngine">
-            <property name="maximumSize">
-             <size>
-              <width>2000</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Device :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="comboDevice"/>
-          </item>
-         </layout>
+        <layout class="QHBoxLayout">
+         <item><widget class="QPushButton" name="btnOpenFolder"><property name="text"><string>📂 Ouvrir dossier</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnSave"><property name="text"><string>💾 Sauvegarder</string></property></widget></item>
+        </layout>
+       </item>
+
+       <item>
+        <layout class="QHBoxLayout">
+         <item><widget class="QPushButton" name="btnAdd"><property name="text"><string>➕ Ajouter bulle</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnReloadConfig"><property name="text"><string>🔄 Recharger config</string></property></widget></item>
+        </layout>
+       </item>
+
+       <!-- Console log -->
+       <item>
+        <widget class="QTextBrowser" name="console">
+         <property name="fixedHeight"><number>100</number></property>
         </widget>
        </item>
-       <item>
-        <widget class="QGroupBox" name="groupResources">
-         <property name="title">
-          <string>Ressources</string>
-         </property>
-         <layout class="QFormLayout">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblVRAM">
-            <property name="text">
-             <string>VRAM GPU :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <layout class="QHBoxLayout">
-            <item>
-             <widget class="QSlider" name="sliderVRAM">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>1</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimum">
-               <number>10</number>
-              </property>
-              <property name="maximum">
-               <number>100</number>
-              </property>
-              <property name="value">
-               <number>50</number>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="lblVRAMVal">
-              <property name="text">
-               <string>50%</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="lblRAM">
-            <property name="text">
-             <string>RAM CPU :</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <layout class="QHBoxLayout">
-            <item>
-             <widget class="QSlider" name="sliderRAM">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>1</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>64</number>
-              </property>
-              <property name="value">
-               <number>4</number>
-              </property>
-              <property name="singleStep">
-               <number>1</number>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="lblRAMVal">
-              <property name="text">
-               <string>4 GB</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="lblGPUInfo">
-         <property name="styleSheet">
-          <string>color: #888; font-size: 11px; padding: 4px;</string>
-         </property>
-         <property name="text">
-          <string>Détection GPU en cours...</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnSettings">
-         <property name="text">
-          <string>Sensibilité OCR...</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnOpenProject">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string>font-weight: bold; padding: 8px;</string>
-         </property>
-         <property name="text">
-          <string>Ouvrir le projet sélectionné</string>
-         </property>
-        </widget>
-       </item>
+
       </layout>
      </widget>
     </item>
+
    </layout>
   </widget>
+
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
- <connections/>
 </ui>

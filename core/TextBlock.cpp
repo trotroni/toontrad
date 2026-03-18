@@ -6,12 +6,20 @@ TextBlock::TextBlock(int id, QRect box, QString text, double conf)
 {
     polygon << box.topLeft() << box.topRight()
             << box.bottomRight() << box.bottomLeft();
+
+    int mx = boundingBox.width()  * 0.1;
+    int my = boundingBox.height() * 0.1;
+    innerRect = boundingBox.adjusted(mx, my, -mx, -my);
 }
 
 TextBlock::TextBlock(int id, QPolygon poly, QString text, double conf)
     : id(id), polygon(poly), confidence(conf), originalText(std::move(text))
 {
     boundingBox = poly.boundingRect();
+
+    int mx = boundingBox.width()  * 0.1;
+    int my = boundingBox.height() * 0.1;
+    innerRect = boundingBox.adjusted(mx, my, -mx, -my);
 }
 
 QJsonObject TextBlock::toJson() const

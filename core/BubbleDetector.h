@@ -1,26 +1,31 @@
 #ifndef BUBBLEDETECTOR_H
 #define BUBBLEDETECTOR_H
 
-#include <QImage>
-#include <QRect>
+#include <QObject>
+#include <QProcess>
 #include <vector>
+#include "Bubble.h"
 
-class BubbleDetector
+class BubbleDetector : public QObject
 {
-public:
-    BubbleDetector() = default;
+    Q_OBJECT
 
-    std::vector<QRect> detect(const QImage& image,
-                              int whiteThreshold = 210,
-                              int minArea        = 2000);
+public:
+    explicit BubbleDetector(QObject* parent = nullptr);
+
+    // Lance detect.py sur l'image et retourne les bulles parsées.
+    // Bloquant (waitForFinished) — appelé depuis un thread UI uniquement
+    // si l'image n'est pas trop lourde, sinon utiliser runAsync.
+    std::vector<Bubble> run(const QString& imagePath);
+
+    // Vérification rapide : python3 + detect.py accessibles ?
+    static bool checkAvailable(QString* errorMsg = nullptr);
+
+    signals:
+        void errorOccurred(const QString& message);
 
 private:
-    bool  isWhite(QRgb pixel, int threshold) const;
-    QRect floodFillBounds(const QImage& img, int x, int y,
-                          std::vector<std::vector<bool>>& visited) const;
-    QRect detectFromPoint(const QImage& image, int x, int y,
-                      int whiteThreshold = 210, int minArea = 500);
-    bool  isValidBubble(const QRect& r, int imgW, int imgH, int minArea) const;
+    std::vector<Bubble> parseJson(const QByteArray& json);
 };
 
 #endif // BUBBLEDETECTOR_H

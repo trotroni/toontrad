@@ -16,7 +16,7 @@ set(SOURCES
         config.cpp
 
         core/TextBlock.cpp
-        core/BubbleDetector.cpp
+        core/Bubble.cpp
         core/OCRManager.cpp
         core/Exporter.cpp
         core/Translator.cpp
@@ -33,7 +33,7 @@ set(HEADERS
         config.h
 
         core/TextBlock.h
-        core/BubbleDetector.h
+        core/Bubble.h
         core/OCRManager.h
         core/OCRConfig.h
         core/Exporter.h
@@ -49,7 +49,7 @@ set(HEADERS
 )
 
 set(UIS
-        windows/main/mainwindow.ui
+        windows/main/mainwindow.uii
         windows/OCR/OCRwindow.ui
         windows/settings/SettingsWindow.ui
 )
