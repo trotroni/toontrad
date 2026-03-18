@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TextWindow</class>
+ <widget class="QMainWindow" name="TextWindow">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>420</width><height>820</height></rect></property>
+  <property name="windowTitle"><string>ToonTrad — Traduction</string></property>
+
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="rootLayout">
+
+    <!-- Titre page courante -->
+    <item>
+     <widget class="QLabel" name="lblPage">
+      <property name="text"><string>—</string></property>
+      <property name="alignment"><set>Qt::AlignCenter</set></property>
+      <property name="styleSheet"><string>font-weight: bold; padding: 4px;</string></property>
+     </widget>
+    </item>
+
+    <!-- Scroll des panneaux bulles -->
+    <item>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="widgetResizable"><bool>true</bool></property>
+      <widget class="QWidget" name="scrollContent">
+       <layout class="QVBoxLayout" name="scrollLayout">
+        <item>
+         <spacer>
+          <property name="orientation"><enum>Qt::Vertical</enum></property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+
+   </layout>
+  </widget>
+ </widget>
+</ui>
