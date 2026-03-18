@@ -34,6 +34,7 @@ output/
 *.swp
 *.swo
 *.log
+.venv/
 
 # ----------------------
 # Misc / temp
