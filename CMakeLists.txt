@@ -19,7 +19,6 @@ set(SOURCES
 
         windows/main/mainwindow.cpp
         windows/OCR/OCRwindow.cpp
-        main.cpp
 )
 
 set(HEADERS
@@ -32,14 +31,12 @@ set(HEADERS
 
         windows/main/mainwindow.h
         windows/OCR/OCRwindow.h
-        main.cpp
 )
 
 set(UIS
         app/App.ui
         windows/main/mainwindow.ui
         windows/OCR/OCRwindow.ui
-        main.cpp
         core/BubbleDetector.cpp
         core/Exporter.cpp
         core/TextBlock.cpp
