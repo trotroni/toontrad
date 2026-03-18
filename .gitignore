@@ -34,6 +34,7 @@ output/
 *.swp
 *.swo
 *.log
+.venv/
 
 # ----------------------
 # Misc / temp
@@ -41,3 +42,7 @@ output/
 *.tmp
 *.bak
 *.backup
+
+# ----------------------
+# tessdata
+# ----------------------
