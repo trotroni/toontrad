@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="ToonTrad favicon">
+  <title>ToonTrad</title>
+  <!-- Fond rouge plein (pas de coin coupé à 32px, trop petit) -->
+  <rect x="0" y="0" width="32" height="32" fill="#e63b2e"/>
+  <!-- T blanc (Toon) -->
+  <rect x="3"  y="4"  width="12" height="3" fill="white"/>
+  <rect x="7"  y="7"  width="4"  height="13" fill="white"/>
+  <!-- T sombre (Trad) -->
+  <rect x="13" y="10" width="16" height="3" fill="#0b0b0b"/>
+  <rect x="19" y="13" width="4"  height="16" fill="#0b0b0b"/>
+</svg>
