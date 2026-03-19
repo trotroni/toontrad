@@ -1,63 +1,122 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
-        <meta charset="utf-8">
-        <title>404 - Page introuvable</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="">
-        <style>
-            body {
-                margin: 0;
-                background: #0d0d0d;
-                color: #eaeaea;
-                font-family: system-ui, sans-serif;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-            }
-
-            .box {
-                text-align: center;
-                max-width: 480px;
-            }
-
-            h1 {
-                font-size: 5rem;
-                margin: 0;
-                color: #ff4d4d;
-            }
-
-            p {
-                opacity: 0.7;
-            }
-
-            button {
-                margin-top: 20px;
-                padding: 10px 18px;
-                background: #1f1f1f;
-                color: #fff;
-                border: 1px solid #333;
-                cursor: pointer;
-            }
-
-            button:hover {
-                background: #2a2a2a;
-            }
-        </style>
-    </head>
-    <body>
-
-        <div class="box">
-            <h1>404</h1>
-            <p>La page demandée n’existe pas.</p>
-            <button onclick="goHome()">Retour main page</button>
-        </div>
-
-        <script>
-            function goHome() {
-                window.location.href = "/toontrad/";
-            }
-        </script>
-    </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — trotroni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #0b0b0b;
+      --border: #1e1e1e;
+      --accent: #e63b2e;
+      --text:   #e0e0e0;
+      --dim:    #555;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow: hidden;
+    }
+    /* Grid bg */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .container {
+      position: relative;
+      text-align: center;
+      max-width: 520px;
+    }
+    .num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(120px, 25vw, 200px);
+      line-height: 0.9;
+      color: var(--accent);
+      letter-spacing: 8px;
+      text-shadow: 4px 4px 0 #7a1f19;
+      animation: glitch 4s linear infinite;
+    }
+    @keyframes glitch {
+      0%, 95%, 100% { text-shadow: 4px 4px 0 #7a1f19; transform: none; }
+      96%            { text-shadow: -3px 0 #3b82f6, 3px 0 var(--accent); transform: skewX(-1deg); }
+      97%            { text-shadow: 3px 0 #3b82f6, -3px 0 var(--accent); transform: skewX(1deg); }
+      98%            { text-shadow: 4px 4px 0 #7a1f19; transform: none; }
+    }
+    .label {
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 16px 0 8px;
+    }
+    .msg {
+      font-size: 13px;
+      color: var(--dim);
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+    .msg code {
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+    }
+    .actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 24px;
+      border: 1px solid;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: #c4312a; }
+    .btn-ghost { background: transparent; color: var(--text); border-color: #2a2a2a; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .footer-note {
+      position: fixed;
+      bottom: 24px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #2a2a2a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="num">404</div>
+    <div class="label">Page introuvable</div>
+    <p class="msg">
+      La page que tu cherches n'existe pas.<br>
+      Tu as peut-être tapé <code>/quelquechose</code> de faux.
+    </p>
+    <div class="actions">
+      <a href="/" class="btn btn-primary">← Accueil</a>
+      <a href="https://github.com/trotroni" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
+    </div>
+  </div>
+  <div class="footer-note">[trotroni] · 2025</div>
+</body>
 </html>

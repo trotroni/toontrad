@@ -1,0 +1,83 @@
+/* ═══════════════════════════════════════════
+   animations.css — ToonTrad project page
+═══════════════════════════════════════════ */
+
+/* ── Reveal on scroll ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+/* ── Hero entrance ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-label   { animation: fadeUp 0.6s ease 0.1s  both; }
+.hero-title   { animation: fadeUp 0.7s ease 0.25s both; }
+.hero-tagline { animation: fadeUp 0.6s ease 0.4s  both; }
+.hero-cta     { animation: fadeUp 0.6s ease 0.5s  both; }
+.hero-stats   { animation: fadeUp 0.6s ease 0.6s  both; }
+.hero-terminal{ animation: fadeUp 0.8s ease 0.3s  both; }
+
+/* ── Nav slide ── */
+.nav { animation: navSlide 0.5s ease both; }
+@keyframes navSlide {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ── Pipeline card hover lift ── */
+.pipe-card {
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.pipe-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(230,59,46,0.1);
+}
+
+/* ── Engine row ── */
+.engine-row { transition: background 0.15s, border-color 0.15s; }
+
+/* ── Arch box ── */
+.arch-box { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.arch-box:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+/* ── Comp card ── */
+.comp-card { transition: background 0.15s; }
+
+/* ── Glitch on title ── */
+.hero-title { position: relative; }
+.hero-title:hover { animation: glitch 0.35s linear; }
+@keyframes glitch {
+  0%,100% { text-shadow: none; }
+  20%     { text-shadow: 2px 0 var(--accent), -2px 0 var(--blue); }
+  40%     { text-shadow: -2px 0 var(--accent), 2px 0 var(--blue); }
+  60%     { text-shadow: 2px 0 var(--accent), -2px 0 var(--blue); }
+  80%     { text-shadow: none; }
+}
+
+/* ── OK status pulse ── */
+.s-ok { animation: okPulse 2.5s ease-in-out infinite; }
+@keyframes okPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(39,201,63,0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(39,201,63,0); }
+}
+
+/* ── Burger ── */
+.nav-burger.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+.nav-burger.open span:nth-child(2) { opacity: 0; }
+.nav-burger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+/* ── Link underline ── */
+.footer-link { transition: color 0.2s; }
+.nav-gh { transition: color 0.2s, border-color 0.2s; }

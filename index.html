@@ -1,30 +1,475 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <title>Page en dev</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link href="style.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToonTrad — Scantrad Automation Tool</title>
+  <meta name="description" content="ToonTrad — Pipeline complet pour le scantrad manga/webtoon. OCR multi-moteur, traduction assistée, typesetting. Open source.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
 
-<div class="box">
-    <h1>
-        <span class="blue">Projet en cours</span>
-        <span class="white">de</span>
-        <span class="red">développement</span>
-    </h1>
+  <div class="cursor" id="cursor"></div>
 
-    <p>Cette page est en cours de développement</p>
-    <div class="code">Contact : <b>trotroni@outlook.com</b></div>
+  <!-- ═══ NAV ═══ -->
+  <nav class="nav" id="nav">
+    <a href="#hero" class="nav-logo"><span class="accent">[</span>ToonTrad<span class="accent">]</span></a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Basculer le thème">
+      <span class="theme-icon-dark">☽</span>
+      <span class="theme-icon-light">☀</span>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#pipeline"     class="nav-link">Pipeline</a></li>
+      <li><a href="#ocr"          class="nav-link">OCR</a></li>
+      <li><a href="#architecture" class="nav-link">Architecture</a></li>
+      <li><a href="#install"      class="nav-link">Installer</a></li>
+    </ul>
+    <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="nav-gh">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <button class="nav-burger" id="navBurger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
 
-    <div class="progress-container">
-        <div class="progress-bar">
-        </div>
+  <!-- ═══ HERO ═══ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="grid-lines"></div>
+      <div class="halftone"></div>
     </div>
-    <h3>5%</h3>
-</div>
 
+    <div class="hero-content">
+      <div class="hero-label reveal">
+        <span class="dot-pulse"></span> En développement actif · v0.0.1-debug
+      </div>
+      <h1 class="hero-title reveal">
+        TOON<span class="accent-text">TRAD</span>
+      </h1>
+      <div class="project-counter reveal" id="projectCounter">
+        <span class="counter-label">En développement depuis</span>
+        <div class="counter-parts">
+          <div class="counter-unit"><span class="counter-val" id="cDays">0</span><span class="counter-unit-label">jours</span></div>
+          <span class="counter-sep">:</span>
+          <div class="counter-unit"><span class="counter-val" id="cHours">0</span><span class="counter-unit-label">heures</span></div>
+          <span class="counter-sep">:</span>
+          <div class="counter-unit"><span class="counter-val" id="cMinutes">0</span><span class="counter-unit-label">min</span></div>
+          <span class="counter-sep">:</span>
+          <div class="counter-unit"><span class="counter-val" id="cSeconds">0</span><span class="counter-unit-label">sec</span></div>
+        </div>
+      </div>
+
+      <p class="hero-tagline reveal">
+        Pipeline complet pour le <span class="accent">scantrad manga &amp; webtoon</span><br>
+        OCR multi-moteur · Traduction assistée · Typesetting
+      </p>
+      <div class="hero-cta reveal">
+        <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Code source
+        </a>
+        <a href="#pipeline" class="btn btn-ghost">Voir le pipeline ↓</a>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="hero-stats reveal">
+        <div class="hstat"><span class="hstat-val">5</span><span class="hstat-label">Moteurs OCR</span></div>
+        <div class="hstat-div"></div>
+        <div class="hstat"><span class="hstat-val">6</span><span class="hstat-label">Étapes auto</span></div>
+        <div class="hstat-div"></div>
+        <div class="hstat"><span class="hstat-val">C++/Qt6</span><span class="hstat-label">+ Python</span></div>
+        <div class="hstat-div"></div>
+        <div class="hstat"><span class="hstat-val">Open</span><span class="hstat-label">Source</span></div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="hero-terminal reveal-right" aria-label="Terminal de démonstration">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#e63b2e"></span>
+        <span class="term-dot" style="background:#f5a623"></span>
+        <span class="term-dot" style="background:#27c93f"></span>
+        <span class="term-title">ToonTrad — OCR pipeline</span>
+      </div>
+      <div class="term-body" id="termBody"></div>
+    </div>
+
+    <a href="#pipeline" class="scroll-hint" aria-label="Défiler"><div class="scroll-arrow"></div></a>
+  </section>
+
+  <!-- ═══ PIPELINE ═══ -->
+  <section class="section section-dark" id="pipeline">
+    <div class="section-label reveal">
+      <span class="section-num">01</span><span class="section-slash">/</span> Pipeline
+    </div>
+    <h2 class="section-title reveal">6 étapes automatisées</h2>
+    <p class="section-intro reveal">De l'image RAW au fichier final traduit — tout le workflow scantrad en un seul outil.</p>
+
+    <div class="pipeline-full">
+      <div class="pipe-card reveal">
+        <div class="pipe-card-num">01</div>
+        <div class="pipe-card-icon">⬇</div>
+        <div class="pipe-card-name">Download RAWs</div>
+        <p class="pipe-card-desc">Téléchargement automatique des planches brutes depuis les sources configurées.</p>
+        <span class="pipe-status todo">Planifié</span>
+      </div>
+      <div class="pipe-connector reveal" aria-hidden="true">→</div>
+
+      <div class="pipe-card active reveal">
+        <div class="pipe-card-num">02</div>
+        <div class="pipe-card-icon">🔍</div>
+        <div class="pipe-card-name">OCR</div>
+        <p class="pipe-card-desc">Détection des bulles et extraction du texte. 5 moteurs interchangeables, sélection GPU/CPU auto.</p>
+        <span class="pipe-status done">Fonctionnel</span>
+      </div>
+      <div class="pipe-connector reveal" aria-hidden="true">→</div>
+
+      <div class="pipe-card active reveal">
+        <div class="pipe-card-num">03</div>
+        <div class="pipe-card-icon">🌐</div>
+        <div class="pipe-card-name">Traduction</div>
+        <p class="pipe-card-desc">Traduction assistée via DeepL API. Édition manuelle inline dans l'interface Qt.</p>
+        <span class="pipe-status wip">En cours</span>
+      </div>
+      <div class="pipe-connector reveal" aria-hidden="true">→</div>
+
+      <div class="pipe-card active reveal">
+        <div class="pipe-card-num">04</div>
+        <div class="pipe-card-icon">✅</div>
+        <div class="pipe-card-name">Validation</div>
+        <p class="pipe-card-desc">Workflow de révision par bulle : TODO → WIP → TL → REV → OK → FIX.</p>
+        <span class="pipe-status done">Fonctionnel</span>
+      </div>
+      <div class="pipe-connector reveal" aria-hidden="true">→</div>
+
+      <div class="pipe-card active reveal">
+        <div class="pipe-card-num">05</div>
+        <div class="pipe-card-icon">🖼</div>
+        <div class="pipe-card-name">Typesetting</div>
+        <p class="pipe-card-desc">Rendu du texte traduit sur l'image source. Export PNG, JSON et TXT.</p>
+        <span class="pipe-status done">Fonctionnel</span>
+      </div>
+      <div class="pipe-connector reveal" aria-hidden="true">→</div>
+
+      <div class="pipe-card active reveal">
+        <div class="pipe-card-num">06</div>
+        <div class="pipe-card-icon">📦</div>
+        <div class="pipe-card-name">Export</div>
+        <p class="pipe-card-desc">Packaging de la sortie. CI/CD via GitHub Actions déclenché par les tags de version.</p>
+        <span class="pipe-status done">Fonctionnel</span>
+      </div>
+    </div>
+
+    <!-- Status workflow -->
+    <div class="status-row reveal">
+      <div class="status-label-title">Statuts par bulle</div>
+      <div class="status-flow">
+        <div class="status-chip s-todo">TODO</div>
+        <span class="status-sep">→</span>
+        <div class="status-chip s-wip">WIP</div>
+        <span class="status-sep">→</span>
+        <div class="status-chip s-tl">TL</div>
+        <span class="status-sep">→</span>
+        <div class="status-chip s-rev">REV</div>
+        <span class="status-sep">→</span>
+        <div class="status-chip s-ok">OK</div>
+        <span class="status-sep">↔</span>
+        <div class="status-chip s-fix">FIX</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ OCR ENGINES ═══ -->
+  <section class="section" id="ocr">
+    <div class="section-label reveal">
+      <span class="section-num">02</span><span class="section-slash">/</span> Moteurs OCR
+    </div>
+    <h2 class="section-title reveal">Sélection automatique selon le matériel</h2>
+
+    <div class="ocr-grid">
+      <!-- Engine list -->
+      <div class="engines-col reveal">
+        <div class="engine-row">
+          <div class="engine-main">
+            <span class="engine-icon">🏓</span>
+            <div>
+              <div class="engine-name">PaddleOCR</div>
+              <div class="engine-sub">Très rapide · excellent pour l'asiatique</div>
+            </div>
+          </div>
+          <div class="engine-tags">
+            <span class="etag gpu">GPU</span>
+            <span class="etag lang">JA · ZH · EN · FR</span>
+          </div>
+        </div>
+        <div class="engine-row">
+          <div class="engine-main">
+            <span class="engine-icon">👁</span>
+            <div>
+              <div class="engine-name">EasyOCR</div>
+              <div class="engine-sub">Bon général · multi-langue</div>
+            </div>
+          </div>
+          <div class="engine-tags">
+            <span class="etag gpu">GPU</span>
+            <span class="etag lang">Multi</span>
+          </div>
+        </div>
+        <div class="engine-row">
+          <div class="engine-main">
+            <span class="engine-icon">🤖</span>
+            <div>
+              <div class="engine-name">TrOCR</div>
+              <div class="engine-sub">Microsoft · meilleure qualité texte stylisé</div>
+            </div>
+          </div>
+          <div class="engine-tags">
+            <span class="etag gpu">GPU ≥ 6 GB</span>
+          </div>
+        </div>
+        <div class="engine-row">
+          <div class="engine-main">
+            <span class="engine-icon">📖</span>
+            <div>
+              <div class="engine-name">manga-ocr</div>
+              <div class="engine-sub">Spécialisé manga japonais</div>
+            </div>
+          </div>
+          <div class="engine-tags">
+            <span class="etag gpu">GPU</span>
+            <span class="etag lang">JA</span>
+          </div>
+        </div>
+        <div class="engine-row">
+          <div class="engine-main">
+            <span class="engine-icon">📝</span>
+            <div>
+              <div class="engine-name">Tesseract</div>
+              <div class="engine-sub">Fallback léger · bundlé au build</div>
+            </div>
+          </div>
+          <div class="engine-tags">
+            <span class="etag cpu">CPU</span>
+            <span class="etag lang">7 langues</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-select logic -->
+      <div class="engine-logic reveal-right">
+        <div class="logic-title">Logique de sélection</div>
+        <div class="logic-block">
+          <div class="logic-line"><span class="lk">if</span> CUDA disponible:</div>
+          <div class="logic-line indent"><span class="lk">if</span> VRAM <span class="lo">≥</span> <span class="ln">6</span> GB → <span class="lv">TrOCR</span></div>
+          <div class="logic-line indent"><span class="lk">else</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span class="lv">EasyOCR</span></div>
+          <div class="logic-line"><span class="lk">else</span> (CPU):</div>
+          <div class="logic-line indent">→ <span class="lv">Tesseract</span></div>
+        </div>
+
+        <div class="logic-note">
+          <div class="logic-note-title">📦 Tessdata bundlé</div>
+          Les modèles Tesseract (<code>eng</code>, <code>jpn</code>, <code>fra</code>, <code>deu</code>, <code>spa</code>, <code>chi_sim</code>, <code>kor</code>) sont téléchargés automatiquement au build via CMake. Zéro intervention manuelle.
+        </div>
+
+        <div class="logic-note">
+          <div class="logic-note-title">🖱 Ajout manuel de bulle</div>
+          Clic droit sur l'image → "Ajouter une bulle ici". ToonTrad détecte la région (flood fill), crop, OCR, et l'ajoute dans la liste.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ARCHITECTURE ═══ -->
+  <section class="section section-dark" id="architecture">
+    <div class="section-label reveal">
+      <span class="section-num">03</span><span class="section-slash">/</span> Architecture
+    </div>
+    <h2 class="section-title reveal">C++ ↔ Python via QProcess</h2>
+
+    <!-- Flow diagram -->
+    <div class="arch-flow reveal">
+      <div class="arch-box cpp">
+        <div class="arch-box-lang">Qt6 / C++17</div>
+        <div class="arch-box-name">MainWindow</div>
+        <div class="arch-box-sub">Projets · Config · GPU detect</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box cpp">
+        <div class="arch-box-lang">Qt6 / C++17</div>
+        <div class="arch-box-name">OCRwindow</div>
+        <div class="arch-box-sub">Navigation · Blocs UI · Export</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box accent-box">
+        <div class="arch-box-lang">C++ core</div>
+        <div class="arch-box-name">OCRManager</div>
+        <div class="arch-box-sub">QProcess · JSON · ParseOutput</div>
+      </div>
+      <div class="arch-arrow accent-arrow">→ JSON →</div>
+      <div class="arch-box py">
+        <div class="arch-box-lang">Python</div>
+        <div class="arch-box-name">main_ocr.py</div>
+        <div class="arch-box-sub">Entrée · Tessdata · Args</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box py">
+        <div class="arch-box-lang">Python</div>
+        <div class="arch-box-name">OCRManager.py</div>
+        <div class="arch-box-sub">Multi-engine · GPU/CPU</div>
+      </div>
+    </div>
+
+    <!-- Component cards -->
+    <div class="components-grid">
+      <div class="comp-card reveal">
+        <div class="comp-tag cpp-tag">C++</div>
+        <div class="comp-name">ImageCanvas</div>
+        <p class="comp-desc">QGraphicsView custom. Zoom molette, scroll drag, affichage des polygones OCR colorés par confiance. Clic droit contextuel : supprimer une zone ou ajouter une bulle manuellement.</p>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-tag cpp-tag">C++</div>
+        <div class="comp-name">ProjectManager</div>
+        <p class="comp-desc">Singleton. Gère les projets via <code>project.json</code>. Scan automatique des images (PNG, JPG, WebP, TIFF…). Persistance des préférences via QSettings.</p>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-tag cpp-tag">C++</div>
+        <div class="comp-name">BubbleDetector</div>
+        <p class="comp-desc">Flood fill depuis un pixel cliqué. Remonte vers le blanc le plus proche (rayon 80px), détecte la région, filtre par aire et ratio largeur/hauteur.</p>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-tag cpp-tag">C++</div>
+        <div class="comp-name">Exporter</div>
+        <p class="comp-desc">Rendu du texte traduit sur l'image (QPainter). Export <code>.json</code> (avec champs Photoshop), <code>.txt</code> tabulé, <code>.png</code> rendu final.</p>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-tag py-tag">Python</div>
+        <div class="comp-name">ocr_engine.py</div>
+        <p class="comp-desc">Détection du matériel via PyTorch. Résout le device (<code>auto → cuda:N</code> ou <code>cpu</code>). Sélection automatique du moteur selon VRAM disponible.</p>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-tag py-tag">Python</div>
+        <div class="comp-name">ocr_manager.py</div>
+        <p class="comp-desc">Charge le moteur, limite la VRAM/RAM, lance l'extraction. Retourne une liste de blocs <code>{text, confidence, box}</code> filtrés par seuil de confiance.</p>
+      </div>
+    </div>
+
+    <!-- Data format -->
+    <div class="dataformat reveal">
+      <div class="df-title">Format de données — <code>project.json</code></div>
+      <div class="df-body">
+        <div class="df-line"><span class="jb">{</span></div>
+        <div class="df-line">&nbsp;&nbsp;<span class="jk">"name"</span><span class="jo">:</span> <span class="js">"one-piece-ch1100"</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;<span class="jk">"version"</span><span class="jo">:</span> <span class="jn">2</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;<span class="jk">"pages"</span><span class="jo">:</span> <span class="jb">[</span> <span class="jcmt">// une entrée par image</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">{</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"file"</span><span class="jo">:</span>    <span class="js">"raw/p001.jpg"</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"ocrDone"</span><span class="jo">:</span> <span class="jn">true</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"blocks"</span><span class="jo">:</span> <span class="jb">[</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">{</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"id"</span><span class="jo">:</span>             <span class="jn">1</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"confidence"</span><span class="jo">:</span>     <span class="jn">0.94</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"originalText"</span><span class="jo">:</span>   <span class="js">"こんにちは！"</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"translatedText"</span><span class="jo">:</span> <span class="js">"Bonjour !"</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"boundingBox"</span><span class="jo">:</span>   <span class="jb">{</span> <span class="jk">"x"</span><span class="jo">:</span> <span class="jn">120</span><span class="jc">,</span> <span class="jk">"y"</span><span class="jo">:</span> <span class="jn">45</span><span class="jc">,</span> <span class="jk">"w"</span><span class="jo">:</span> <span class="jn">180</span><span class="jc">,</span> <span class="jk">"h"</span><span class="jo">:</span> <span class="jn">40</span> <span class="jb">}</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"polygon"</span><span class="jo">:</span>       <span class="jb">[[</span><span class="jn">120</span><span class="jc">,</span><span class="jn">45</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">300</span><span class="jc">,</span><span class="jn">45</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">300</span><span class="jc">,</span><span class="jn">85</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">120</span><span class="jc">,</span><span class="jn">85</span><span class="jb">]]</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">}</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">]</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">}</span></div>
+        <div class="df-line">&nbsp;&nbsp;<span class="jb">]</span></div>
+        <div class="df-line"><span class="jb">}</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ INSTALL ═══ -->
+  <section class="section" id="install">
+    <div class="section-label reveal">
+      <span class="section-num">04</span><span class="section-slash">/</span> Installer
+    </div>
+    <h2 class="section-title reveal">Démarrage rapide</h2>
+
+    <div class="install-grid">
+      <div class="install-step reveal">
+        <div class="install-num">01</div>
+        <div class="install-title">Cloner le repo</div>
+        <div class="codeblock">
+          <div class="codeblock-bar">bash</div>
+          <div class="codeblock-body">
+            <div class="cb-line"><span class="cb-prompt">$</span> git clone https://github.com/trotroni/toontrad</div>
+            <div class="cb-line"><span class="cb-prompt">$</span> cd toontrad</div>
+            <div class="cb-line"><span class="cb-prompt">$</span> git checkout dev</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step reveal">
+        <div class="install-num">02</div>
+        <div class="install-title">Dépendances Python</div>
+        <div class="codeblock">
+          <div class="codeblock-bar">bash</div>
+          <div class="codeblock-body">
+            <div class="cb-line"><span class="cb-prompt">$</span> pip install -r requirements.txt</div>
+            <div class="cb-line cb-dim"># GPU CUDA :</div>
+            <div class="cb-line"><span class="cb-prompt">$</span> pip install torch torchvision \</div>
+            <div class="cb-line">&nbsp;&nbsp;--index-url https://download.pytorch.org/whl/cu118</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="install-step reveal">
+        <div class="install-num">03</div>
+        <div class="install-title">Build CMake</div>
+        <div class="codeblock">
+          <div class="codeblock-bar">bash</div>
+          <div class="codeblock-body">
+            <div class="cb-line"><span class="cb-prompt">$</span> cmake -B build -S .</div>
+            <div class="cb-line"><span class="cb-prompt">$</span> cmake --build build</div>
+            <div class="cb-line cb-dim"># → télécharge tessdata auto</div>
+            <div class="cb-line cb-dim"># → copie python/ + resources/</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requirements -->
+    <div class="reqs reveal">
+      <div class="reqs-title">Dépendances système</div>
+      <div class="reqs-grid">
+        <div class="req-item"><span class="req-name">Qt6</span><span class="req-ver">Widgets + Network</span></div>
+        <div class="req-item"><span class="req-name">CMake</span><span class="req-ver">≥ 3.16</span></div>
+        <div class="req-item"><span class="req-name">C++17</span><span class="req-ver">compilateur compatible</span></div>
+        <div class="req-item"><span class="req-name">Python</span><span class="req-ver">3.9+</span></div>
+        <div class="req-item"><span class="req-name">Tesseract</span><span class="req-ver">binaire système</span></div>
+        <div class="req-item"><span class="req-name">PyTorch</span><span class="req-ver">≥ 2.0 (optionnel GPU)</span></div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-block reveal">
+      <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Voir sur GitHub
+      </a>
+      <a href="https://github.com/trotroni/toontrad/issues" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">Signaler un bug</a>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="accent">[</span>ToonTrad<span class="accent">]</span>
+      <span class="footer-copy">· Open Source · 2025 · par <a href="https://github.com/trotroni" target="_blank" class="footer-author">trotroni</a></span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/trotroni/toontrad/tree/dev" target="_blank" rel="noopener" class="footer-link">Branch: dev</a>
+      <a href="https://github.com/trotroni/toontrad/releases" target="_blank" rel="noopener" class="footer-link">Releases</a>
+      <a href="https://github.com/trotroni/toontrad/issues" target="_blank" rel="noopener" class="footer-link">Issues</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/terminal.js"></script>
 </body>
 </html>
