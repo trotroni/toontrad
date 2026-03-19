@@ -22,8 +22,8 @@ public:
     void clearBlocks();
     void highlightBlock(int id);   // surligne une bulle (sync TextWindow → ImageWindow)
 
-signals:
-    void blockSelected(int id);             // clic sur une bulle
+    signals:
+        void blockSelected(int id);             // clic sur une bulle
     void blockDeleteRequested(int id);      // menu contextuel → supprimer
     void addBubbleRequested(QPointF scenePos); // menu contextuel → ajouter
     void dragBubbleRequested(QRectF rect);  // drag terminé → nouvelle bulle
@@ -41,9 +41,11 @@ private:
     QMap<int, QGraphicsItem*> m_blockItems;
 
     // Drag pour ajout manuel
-    bool    m_dragging  = false;
+    bool    m_dragging   = false;
     QPointF m_dragStart;
     QGraphicsRectItem* m_dragRect = nullptr;
+
+
 
     QColor colorForConfidence(double conf) const;
     void   drawBlocks(const std::vector<TextBlock>& blocks);

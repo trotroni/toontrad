@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <QString>
+#include "core/OCRConfig.h"
 
 class Config
 {
@@ -10,18 +11,23 @@ public:
 
     // Python
     static QString pythonBin;
-    static QString detectScript;   // chemin vers python/detect.py
-    static QString tessdataPath;   // chemin vers resources/tessdata
+    static QString detectScript;
+    static QString tessdataPath;
 
     // App
     static bool    darkMode;
     static QString deeplApiKey;
 
-    // Inner rect ratio (zone de texte dans la bulle, 0.0–1.0)
+    // Inner rect ratio
     static double  innerRectRatio;
+
+    // Paramètres OCR persistants
+    static OCRConfig ocrConfig;
 
     static void load();
     static void save();
+    static void saveOCR(const OCRConfig& config);
+    static OCRConfig loadOCR();
 };
 
 #endif // CONFIG_H

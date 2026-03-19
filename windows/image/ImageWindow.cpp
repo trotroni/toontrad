@@ -308,6 +308,34 @@ void ImageWindow::highlightBlock(int id)
     if (canvas) canvas->highlightBlock(id);
 }
 
+void ImageWindow::reorderBlocks(const QList<int>& newIdOrder)
+{
+    ImagePage* page = currentPage();
+    if (!page) return;
+
+    // Réordonne page->blocks selon le nouvel ordre des IDs
+    std::vector<TextBlock> reordered;
+    reordered.reserve(page->blocks.size());
+
+    for (int id : newIdOrder) {
+        for (const auto& b : page->blocks) {
+            if (b.id == id) {
+                reordered.push_back(b);
+                break;
+            }
+        }
+    }
+
+    // Réassigne les IDs séquentiellement
+    for (int i = 0; i < (int)reordered.size(); ++i)
+        reordered[i].id = i + 1;
+
+    page->blocks = reordered;
+
+    auto* canvas = qobject_cast<ImageCanvas*>(ui->imageCanvas);
+    if (canvas) canvas->setBlocks(page->blocks);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  Interactions canvas
 // ─────────────────────────────────────────────────────────────────────────────

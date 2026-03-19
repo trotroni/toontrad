@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/toontrad-icon-red-double-t.svg</file>
+    </qresource>
+</RCC>

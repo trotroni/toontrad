@@ -1,10 +1,10 @@
 #include "ImageCanvas.h"
 #include <QMenu>
 #include <QAction>
-#include <QAction>
 #include <QScrollBar>
 #include <QGraphicsRectItem>
 #include <QGraphicsTextItem>
+#include <QTimer>
 #include <QDebug>
 
 ImageCanvas::ImageCanvas(QWidget* parent)
@@ -14,17 +14,23 @@ ImageCanvas::ImageCanvas(QWidget* parent)
     setScene(m_scene);
     setDragMode(QGraphicsView::NoDrag);
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setResizeAnchor(QGraphicsView::AnchorViewCenter);
     setRenderHint(QPainter::Antialiasing);
     setContextMenuPolicy(Qt::DefaultContextMenu);
     setBackgroundBrush(QColor(40, 40, 40));
 
-    // Ctrl+0 → reset zoom
+    // Affiche les scrollbars quand l'image dépasse
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    // Ctrl+0 → reset zoom (fit to view)
     auto* resetAction = new QAction(this);
     resetAction->setShortcut(QKeySequence("Ctrl+0"));
     connect(resetAction, &QAction::triggered, this, [this]() {
-        resetTransform();
-        if (m_pixmapItem && !m_scene->sceneRect().isEmpty())
+        if (m_pixmapItem && !m_scene->sceneRect().isEmpty()) {
+            resetTransform();
             fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+        }
     });
     addAction(resetAction);
 }
@@ -35,21 +41,29 @@ void ImageCanvas::setImage(const QImage& image)
     m_scene->clear();
     m_blockItems.clear();
     m_pixmapItem = nullptr;
+
     if (image.isNull()) return;
+
     m_pixmapItem = m_scene->addPixmap(QPixmap::fromImage(image));
     m_scene->setSceneRect(image.rect());
-    if (!size().isEmpty())
-        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+
+    // Fit différé — garantit que le widget est dimensionné avant le fit
+    QTimer::singleShot(0, this, [this]() {
+        if (m_pixmapItem && !m_scene->sceneRect().isEmpty()) {
+            resetTransform();
+            fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+        }
+    });
 }
 
 void ImageCanvas::setBlocks(const std::vector<TextBlock>& blocks)
 {
-    // Supprime tous les items sauf le pixmap
     for (auto* item : m_scene->items())
         if (item != m_pixmapItem)
             m_scene->removeItem(item);
     m_blockItems.clear();
     drawBlocks(blocks);
+    // Ne touche PAS au zoom ici
 }
 
 void ImageCanvas::clearBlocks()
@@ -62,18 +76,13 @@ void ImageCanvas::clearBlocks()
 
 void ImageCanvas::highlightBlock(int id)
 {
-    // Remet tous les blocs à leur couleur normale
-    for (auto it = m_blockItems.begin(); it != m_blockItems.end(); ++it) {
-        if (auto* rect = dynamic_cast<QGraphicsRectItem*>(it.value())) {
+    for (auto it = m_blockItems.begin(); it != m_blockItems.end(); ++it)
+        if (auto* rect = dynamic_cast<QGraphicsRectItem*>(it.value()))
             rect->setPen(QPen(QColor(0, 200, 80, 180), 2));
-        }
-    }
-    // Surligne le bloc sélectionné
-    if (m_blockItems.contains(id)) {
-        if (auto* rect = dynamic_cast<QGraphicsRectItem*>(m_blockItems[id])) {
+
+    if (m_blockItems.contains(id))
+        if (auto* rect = dynamic_cast<QGraphicsRectItem*>(m_blockItems[id]))
             rect->setPen(QPen(QColor(255, 220, 0), 3));
-        }
-    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,19 +100,16 @@ void ImageCanvas::drawBlocks(const std::vector<TextBlock>& blocks)
         QPen   pen(color, 2);
         QBrush brush(QColor(color.red(), color.green(), color.blue(), 30));
 
-        // Rectangle externe — vert
         auto* outer = m_scene->addRect(b.boundingBox, pen, brush);
         outer->setData(0, b.id);
         m_blockItems[b.id] = outer;
 
-        // Rectangle interne — rouge (zone texte PS)
         if (!b.innerRect.isEmpty()) {
             QPen innerPen(QColor(255, 60, 60, 200), 1, Qt::DashLine);
             auto* inner = m_scene->addRect(b.innerRect, innerPen, QBrush());
             inner->setData(0, b.id);
         }
 
-        // Label ID
         auto* lbl = m_scene->addText(QString::number(b.id));
         lbl->setDefaultTextColor(color);
         lbl->setPos(b.boundingBox.topLeft() + QPoint(2, 2));
@@ -112,7 +118,7 @@ void ImageCanvas::drawBlocks(const std::vector<TextBlock>& blocks)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Zoom Ctrl+molette
+//  Zoom — Ctrl+molette uniquement, sans limite haute
 // ─────────────────────────────────────────────────────────────────────────────
 void ImageCanvas::wheelEvent(QWheelEvent* event)
 {
@@ -121,6 +127,7 @@ void ImageCanvas::wheelEvent(QWheelEvent* event)
         scale(factor, factor);
         event->accept();
     } else {
+        // Scroll normal (défilement vertical/horizontal)
         QGraphicsView::wheelEvent(event);
     }
 }
@@ -133,7 +140,6 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
     QPointF scenePos = mapToScene(event->pos());
 
     if (event->button() == Qt::RightButton) {
-        // Menu contextuel
         QGraphicsItem* hit = m_scene->itemAt(scenePos, transform());
         int hitId = (hit && hit->data(0).isValid()) ? hit->data(0).toInt() : -1;
 
@@ -154,15 +160,14 @@ void ImageCanvas::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton) {
         QGraphicsItem* hit = m_scene->itemAt(scenePos, transform());
         if (hit && hit->data(0).isValid()) {
-            // Clic sur une bulle → sélection
             emit blockSelected(hit->data(0).toInt());
         } else {
-            // Début drag pour nouvelle bulle
             m_dragging  = true;
             m_dragStart = scenePos;
-            m_dragRect  = m_scene->addRect(QRectF(scenePos, scenePos),
-                                            QPen(QColor(0, 120, 255), 2, Qt::DashLine),
-                                            QBrush(QColor(0, 120, 255, 20)));
+            m_dragRect  = m_scene->addRect(
+                QRectF(scenePos, scenePos),
+                QPen(QColor(0, 120, 255), 2, Qt::DashLine),
+                QBrush(QColor(0, 120, 255, 20)));
         }
     }
 
@@ -197,9 +202,9 @@ void ImageCanvas::mouseReleaseEvent(QMouseEvent* event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
+// resizeEvent — ne touche PLUS au zoom
 void ImageCanvas::resizeEvent(QResizeEvent* event)
 {
     QGraphicsView::resizeEvent(event);
-    if (m_pixmapItem && !m_scene->sceneRect().isEmpty())
-        fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    // Rien ici — le zoom est géré uniquement par l'utilisateur
 }

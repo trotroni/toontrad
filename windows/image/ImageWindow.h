@@ -22,10 +22,11 @@ public:
 
     // Appelé par TextWindow pour synchroniser
     void highlightBlock(int id);
+    void reorderBlocks(const QList<int>& newIdOrder);
 
-    signals:
-        // Émis vers TextWindow
-        void blockSelected(int id);
+signals:
+    // Émis vers TextWindow
+    void blockSelected(int id);
     void blocksChanged(const std::vector<TextBlock>& blocks);
     void pageChanged(int pageIndex);
 

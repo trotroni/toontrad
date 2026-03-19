@@ -27,12 +27,12 @@ ImagePage* Project::findPage(const QString& relativePath)
 
 void Project::scanImages()
 {
-    // Scanne uniquement sprites/ — dossier dédié aux images du projet
-    QString spritesPath = QDir(rootPath).filePath("sprites");
+    // Scanne uniquement raw/ — dossier dédié aux images du projet
+    QString spritesPath = QDir(rootPath).filePath("raw");
     QDir spritesDir(spritesPath);
 
     if (!spritesDir.exists()) {
-        qDebug() << "Project::scanImages: sprites/ introuvable dans" << rootPath;
+        qDebug() << "Project::scanImages: raw/ introuvable dans" << rootPath;
         return;
     }
 

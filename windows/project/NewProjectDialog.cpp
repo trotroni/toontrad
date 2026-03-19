@@ -12,11 +12,10 @@
 
 // Sous-dossiers créés automatiquement dans chaque nouveau projet
 static const QStringList PROJECT_SUBDIRS = {
-    "raw",        // images RAW originales
-    "output",     // exports TXT / JSON
-    "sprites",    // sprites extraits
+    "raw",        // images originales téléchargées
+    "output",     // exports TXT / JSON traductions
     "renders",    // PNG rendus avec traductions
-    "photoshop",  // JSON Photoshop
+    "photoshop",  // JSON Photoshop pour plugin PS
 };
 
 NewProjectDialog::NewProjectDialog(QWidget* parent)

@@ -36,6 +36,18 @@ MainWindow::MainWindow(QWidget* parent)
     Config::load();
     ProjectManager::instance().load();
 
+    // Restaure la config OCR sauvegardée
+    m_config = Config::ocrConfig;
+
+    // Restaure les widgets depuis m_config
+    {
+        auto engines = ToonTrad::engineList();
+        int ei = engines.indexOf(m_config.engine);
+        if (ei >= 0) ui->comboEngine->setCurrentIndex(ei);
+    }
+    ui->sliderVRAM->setValue(static_cast<int>(m_config.gpuMemFraction * 100));
+    ui->lblVRAMVal->setText(QString::number(ui->sliderVRAM->value()) + "%");
+
     // Moteurs
     auto engines = ToonTrad::engineList();
     auto engDisp = ToonTrad::engineDisplayNames();
@@ -179,6 +191,12 @@ void MainWindow::openSelectedProject()
         connect(textWin, &TextWindow::blockSelected,
                 imgWin,  &ImageWindow::highlightBlock);
 
+        // TextWindow → ImageWindow : réordonnancement par drag
+        connect(textWin, &TextWindow::blocksReordered,
+                imgWin, [imgWin](const QList<int>& newOrder) {
+            imgWin->reorderBlocks(newOrder);
+        });
+
         // ── Positionnement côte à côte adapté à l'écran ─────────────────────
         QScreen* screen = QGuiApplication::primaryScreen();
         QRect    avail  = screen->availableGeometry();
@@ -246,8 +264,32 @@ void MainWindow::on_comboEngine_currentIndexChanged(int)
 void MainWindow::on_btnSettings_clicked()
 {
     SettingsWindow dlg(currentConfig(), this);
-    if (dlg.exec() == QDialog::Accepted)
+    if (dlg.exec() == QDialog::Accepted) {
         m_config = dlg.config();
+        Config::saveOCR(m_config);
+    }
+}
+
+void MainWindow::on_btnReloadProject_clicked()
+{
+    auto* item = ui->listProjects->currentItem();
+    if (!item) {
+        statusBar()->showMessage("Aucun projet sélectionné.", 3000);
+        return;
+    }
+
+    QString path = item->data(Qt::UserRole).toString();
+    for (auto& p : ProjectManager::instance().projects()) {
+        if (p.rootPath != path) continue;
+
+        p.scanImages();
+        p.save();
+
+        statusBar()->showMessage(
+            QString("Projet rechargé : %1 image(s) dans raw/")
+                .arg(p.pages.size()), 4000);
+        return;
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
