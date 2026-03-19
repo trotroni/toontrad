@@ -37,11 +37,11 @@ SettingsWindow::SettingsWindow(const OCRConfig& config, QWidget* parent)
     ui->sliderInnerRatio->setValue(static_cast<int>(Config::innerRectRatio * 100));
     ui->lblInnerRatio->setText(QString::number(ui->sliderInnerRatio->value()) + "%");
 
-    // VRAM / RAM
+    // VRAM / RAM — initialisés depuis config pour être synchronisés avec MainWindow
     ui->sliderVRAM->setValue(static_cast<int>(config.gpuMemFraction * 100));
     ui->lblVRAMVal->setText(QString::number(ui->sliderVRAM->value()) + "%");
-    ui->sliderRAM->setValue(4);
-    ui->lblRAMVal->setText("4 GB");
+    ui->sliderRAM->setValue(config.ramGb);
+    ui->lblRAMVal->setText(QString::number(config.ramGb) + " GB");
 
     // Python
     ui->editPythonBin->setText(Config::pythonBin);
@@ -109,7 +109,8 @@ OCRConfig SettingsWindow::config() const
     c.psmMode = psmVals.value(ui->comboPSM->currentIndex(), 6);
 
     c.gpuMemFraction = ui->sliderVRAM->value() / 100.0;
-    c.ramFraction    = ui->sliderRAM->value() / 64.0;
+    c.ramGb          = ui->sliderRAM->value();
+    c.ramFraction    = c.ramGb / 64.0;
 
     Config::innerRectRatio = ui->sliderInnerRatio->value() / 100.0;
     Config::pythonBin      = ui->editPythonBin->text();

@@ -6,11 +6,12 @@
 class Config
 {
 public:
-    inline static const QString VERSION_STR = "0.0.1-debug";
+    inline static const QString VERSION_STR = "1.0.0";
 
     // Python
     static QString pythonBin;
     static QString detectScript;   // chemin vers python/detect.py
+    static QString tessdataPath;   // chemin vers resources/tessdata
 
     // App
     static bool    darkMode;

@@ -11,6 +11,7 @@ struct OCRConfig
     int     gpuId              = 0;
     double  gpuMemFraction     = 0.5;
     double  ramFraction        = 0.5;
+    int     ramGb              = 4;       // valeur absolue GB (sync sliders MainWindow ↔ Settings)
     double  confidenceThreshold = 0.4;
     int     minBubbleArea      = 2000;
     int     minTextLen         = 3;
@@ -30,6 +31,7 @@ struct OCRConfig
         o["language"]             = language;
         o["psm_mode"]             = psmMode;
         o["inner_ratio"]          = 0.85;
+        // tessdata_path injecté par OCRManager depuis Config::tessdataPath
         return o;
     }
 

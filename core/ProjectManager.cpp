@@ -27,8 +27,14 @@ ImagePage* Project::findPage(const QString& relativePath)
 
 void Project::scanImages()
 {
-    QDir root(rootPath);
-    if (!root.exists()) return;
+    // Scanne uniquement sprites/ — dossier dédié aux images du projet
+    QString spritesPath = QDir(rootPath).filePath("sprites");
+    QDir spritesDir(spritesPath);
+
+    if (!spritesDir.exists()) {
+        qDebug() << "Project::scanImages: sprites/ introuvable dans" << rootPath;
+        return;
+    }
 
     QMap<QString, ImagePage> existing;
     for (const auto& p : pages)
@@ -36,12 +42,12 @@ void Project::scanImages()
 
     pages.clear();
 
-    QDirIterator it(rootPath, IMAGE_EXTENSIONS,
+    QDirIterator it(spritesPath, IMAGE_EXTENSIONS,
                     QDir::Files, QDirIterator::Subdirectories);
     QStringList found;
     while (it.hasNext()) {
         it.next();
-        found << root.relativeFilePath(it.filePath());
+        found << QDir(rootPath).relativeFilePath(it.filePath());
     }
     found.sort();
 
@@ -54,7 +60,9 @@ void Project::scanImages()
             pages.append(page);
         }
     }
-    qDebug() << "Project::scanImages:" << pages.size() << "images dans" << rootPath;
+
+    qDebug() << "Project::scanImages:" << pages.size()
+             << "images dans" << spritesPath;
 }
 
 bool Project::load()

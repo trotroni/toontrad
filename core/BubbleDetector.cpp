@@ -28,8 +28,9 @@ std::vector<TextBlock> BubbleDetector::run(const QString& imagePath,
 {
     // Construit le JSON d'arguments pour detect.py
     QJsonObject args = config.toJson();
-    args["image_path"]  = imagePath;
-    args["inner_ratio"] = Config::innerRectRatio;
+    args["image_path"]    = imagePath;
+    args["inner_ratio"]   = Config::innerRectRatio;
+    args["tessdata_path"] = Config::tessdataPath;
 
     QString argsJson = QJsonDocument(args).toJson(QJsonDocument::Compact);
 

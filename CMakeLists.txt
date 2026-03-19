@@ -46,6 +46,10 @@ set(SOURCES
     windows/settings/SettingsWindow.h
     windows/settings/SettingsWindow.cpp
     windows/settings/SettingsWindow.ui
+
+    windows/project/NewProjectDialog.h
+    windows/project/NewProjectDialog.cpp
+    windows/project/NewProjectDialog.ui
 )
 
 qt_add_executable(ToonTrad ${SOURCES})

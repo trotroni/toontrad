@@ -27,8 +27,9 @@ std::vector<TextBlock> OCRManager::runOCR(const QString& imagePath,
                                            const OCRConfig& config)
 {
     QJsonObject args = config.toJson();
-    args["image_path"]  = imagePath;
-    args["inner_ratio"] = Config::innerRectRatio;
+    args["image_path"]    = imagePath;
+    args["inner_ratio"]   = Config::innerRectRatio;
+    args["tessdata_path"] = Config::tessdataPath;
 
     QString argsJson = QJsonDocument(args).toJson(QJsonDocument::Compact);
 

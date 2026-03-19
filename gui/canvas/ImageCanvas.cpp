@@ -1,6 +1,7 @@
 #include "ImageCanvas.h"
 #include <QMenu>
 #include <QAction>
+#include <QAction>
 #include <QScrollBar>
 #include <QGraphicsRectItem>
 #include <QGraphicsTextItem>
@@ -16,6 +17,16 @@ ImageCanvas::ImageCanvas(QWidget* parent)
     setRenderHint(QPainter::Antialiasing);
     setContextMenuPolicy(Qt::DefaultContextMenu);
     setBackgroundBrush(QColor(40, 40, 40));
+
+    // Ctrl+0 → reset zoom
+    auto* resetAction = new QAction(this);
+    resetAction->setShortcut(QKeySequence("Ctrl+0"));
+    connect(resetAction, &QAction::triggered, this, [this]() {
+        resetTransform();
+        if (m_pixmapItem && !m_scene->sceneRect().isEmpty())
+            fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    });
+    addAction(resetAction);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,7 +117,7 @@ void ImageCanvas::drawBlocks(const std::vector<TextBlock>& blocks)
 void ImageCanvas::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers() == Qt::ControlModifier) {
-        double factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
+        double factor = event->angleDelta().y() > 0 ? 1.25 : 1.0 / 1.25;
         scale(factor, factor);
         event->accept();
     } else {

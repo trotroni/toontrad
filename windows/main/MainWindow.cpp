@@ -4,6 +4,7 @@
 #include "../../core/models.h"
 #include "../../core/ProjectManager.h"
 #include "../settings/SettingsWindow.h"
+#include "../project/NewProjectDialog.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -13,6 +14,8 @@
 #include <QJsonObject>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QScreen>
+#include <QGuiApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -98,12 +101,13 @@ void MainWindow::refreshProjectList()
 
 void MainWindow::on_btnNewProject_clicked()
 {
-    QString path = QFileDialog::getExistingDirectory(
-        this, "Sélectionner le dossier du projet", QDir::homePath());
-    if (path.isEmpty()) return;
+    NewProjectDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted) return;
+
+    QString path = dlg.projectPath();
     ProjectManager::instance().addProject(path);
     refreshProjectList();
-    statusBar()->showMessage("Projet ajouté : " + path, 3000);
+    statusBar()->showMessage("Projet créé : " + path, 4000);
 }
 
 void MainWindow::on_btnRemoveProject_clicked()
@@ -175,9 +179,17 @@ void MainWindow::openSelectedProject()
         connect(textWin, &TextWindow::blockSelected,
                 imgWin,  &ImageWindow::highlightBlock);
 
-        // Positionnement côte à côte
-        imgWin->move(100, 80);
-        textWin->move(imgWin->x() + 920, 80);
+        // ── Positionnement côte à côte adapté à l'écran ─────────────────────
+        QScreen* screen = QGuiApplication::primaryScreen();
+        QRect    avail  = screen->availableGeometry();
+
+        // TextWindow : largeur fixe 420px
+        int textW  = 420;
+        int imgW   = avail.width() - textW - 10;
+        int height = avail.height();
+
+        imgWin->setGeometry(avail.x(), avail.y(), imgW, height);
+        textWin->setGeometry(avail.x() + imgW + 5, avail.y(), textW, height);
 
         imgWin->show();
         textWin->show();
@@ -199,8 +211,9 @@ OCRConfig MainWindow::currentConfig() const
     c.engine         = ui->comboEngine->currentData().toString();
     c.device         = ui->comboDevice->currentData().toString();
     c.gpuMemFraction = ui->sliderVRAM->value() / 100.0;
-    double totalGb   = qMax(ui->sliderRAM->maximum(), 1);
-    c.ramFraction    = ui->sliderRAM->value() / totalGb;
+    int totalGb      = qMax(ui->sliderRAM->maximum(), 1);
+    c.ramGb          = ui->sliderRAM->value();
+    c.ramFraction    = c.ramGb / static_cast<double>(totalGb);
     if (c.device.startsWith("cuda:"))
         c.gpuId = c.device.mid(5).toInt();
     return c;

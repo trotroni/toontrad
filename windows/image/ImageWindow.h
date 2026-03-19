@@ -23,9 +23,9 @@ public:
     // Appelé par TextWindow pour synchroniser
     void highlightBlock(int id);
 
-signals:
-    // Émis vers TextWindow
-    void blockSelected(int id);
+    signals:
+        // Émis vers TextWindow
+        void blockSelected(int id);
     void blocksChanged(const std::vector<TextBlock>& blocks);
     void pageChanged(int pageIndex);
 
@@ -60,6 +60,9 @@ private:
     void displayImage();
     void displayBlocks();
     void updateNavButtons();
+
+    int     nextBlockId();
+    QString runOCROnCrop(const QString& cropPath);  // OCR direct sur un crop
     void runOCR();
 
     ImagePage* currentPage();
