@@ -1,0 +1,130 @@
+name: Build & Draft Release
+
+on:
+  push:
+    tags:
+      - 'v*'          # déclenché sur : git tag v1.0.0 && git push origin v1.0.0
+  workflow_dispatch:  # ou manuellement depuis l'onglet Actions
+
+permissions:
+  contents: write   # nécessaire pour créer une release
+
+jobs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  macOS — ToonTrad.app zippé
+  # ───────────────────────────────────────────────────────────────────────────
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.0'
+          host: 'mac'
+          target: 'desktop'
+          modules: 'qtsvg'
+          cache: true
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Zipper le .app
+        run: |
+          cd build
+          zip -r ToonTrad-macOS.zip ToonTrad.app
+
+      - name: Upload artifact macOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToonTrad-macOS
+          path: build/ToonTrad-macOS.zip
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Windows — ToonTrad.exe + dépendances Qt zippés
+  # ───────────────────────────────────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.0'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          modules: 'qtsvg'
+          cache: true
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Deploy Qt (windeployqt)
+        shell: pwsh
+        run: |
+          $exe = "build\Release\ToonTrad.exe"
+          $qtBin = "$env:Qt6_DIR\bin"
+          & "$qtBin\windeployqt.exe" $exe --release --no-translations
+
+      - name: Copier python/ et resources/ dans Release/
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse python  build\Release\python
+          if (Test-Path resources) {
+            Copy-Item -Recurse resources build\Release\resources
+          }
+
+      - name: Zipper le dossier Release
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\Release\* -DestinationPath build\ToonTrad-Windows.zip
+
+      - name: Upload artifact Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToonTrad-Windows
+          path: build\ToonTrad-Windows.zip
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Draft Release — attend les deux builds, crée la release en brouillon
+  # ───────────────────────────────────────────────────────────────────────────
+  draft-release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Télécharger artifact macOS
+        uses: actions/download-artifact@v4
+        with:
+          name: ToonTrad-macOS
+          path: artifacts/
+
+      - name: Télécharger artifact Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: ToonTrad-Windows
+          path: artifacts/
+
+      - name: Créer la draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true                          # brouillon — tu publies quand tu veux
+          generate_release_notes: true         # génère les notes depuis les commits
+          name: "ToonTrad ${{ github.ref_name }}"
+          files: |
+            artifacts/ToonTrad-macOS.zip
+            artifacts/ToonTrad-Windows.zip
