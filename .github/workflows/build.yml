@@ -3,11 +3,11 @@ name: Build & Draft Release
 on:
   push:
     tags:
-      - 'v*'          # déclenché sur : git tag v1.0.0 && git push origin v1.0.0
-  workflow_dispatch:  # ou manuellement depuis l'onglet Actions
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
-  contents: write   # nécessaire pour créer une release
+  contents: write
 
 jobs:
 
@@ -24,11 +24,12 @@ jobs:
       - name: Installer Qt6
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.6.0'
+          version: '6.7.3'
           host: 'mac'
           target: 'desktop'
-          modules: 'qtsvg'
+          arch: 'clang_64'
           cache: true
+          # modules: — qtsvg est inclus dans Qt6 de base, pas un module séparé
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -60,15 +61,15 @@ jobs:
       - name: Installer Qt6
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.6.0'
+          version: '6.7.3'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          modules: 'qtsvg'
           cache: true
+          # modules: — qtsvg est inclus dans Qt6 de base, pas un module séparé
 
-      - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure CMake (MSVC)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release
@@ -122,8 +123,8 @@ jobs:
       - name: Créer la draft release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true                          # brouillon — tu publies quand tu veux
-          generate_release_notes: true         # génère les notes depuis les commits
+          draft: true
+          generate_release_notes: true
           name: "ToonTrad ${{ github.ref_name }}"
           files: |
             artifacts/ToonTrad-macOS.zip
