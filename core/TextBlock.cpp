@@ -1,4 +1,5 @@
 #include "TextBlock.h"
+#include "../config.h"
 #include <QJsonArray>
 
 TextBlock::TextBlock(int id, QRect box, QString text, double conf)
@@ -6,20 +7,24 @@ TextBlock::TextBlock(int id, QRect box, QString text, double conf)
 {
     polygon << box.topLeft() << box.topRight()
             << box.bottomRight() << box.bottomLeft();
-
-    int mx = boundingBox.width()  * 0.1;
-    int my = boundingBox.height() * 0.1;
-    innerRect = boundingBox.adjusted(mx, my, -mx, -my);
+    computeInnerRect();
 }
 
 TextBlock::TextBlock(int id, QPolygon poly, QString text, double conf)
     : id(id), polygon(poly), confidence(conf), originalText(std::move(text))
 {
     boundingBox = poly.boundingRect();
+    computeInnerRect();
+}
 
-    int mx = boundingBox.width()  * 0.1;
-    int my = boundingBox.height() * 0.1;
-    innerRect = boundingBox.adjusted(mx, my, -mx, -my);
+void TextBlock::computeInnerRect()
+{
+    double ratio = Config::innerRectRatio;
+    int nw = static_cast<int>(boundingBox.width()  * ratio);
+    int nh = static_cast<int>(boundingBox.height() * ratio);
+    int ox = (boundingBox.width()  - nw) / 2;
+    int oy = (boundingBox.height() - nh) / 2;
+    innerRect = QRect(boundingBox.x() + ox, boundingBox.y() + oy, nw, nh);
 }
 
 QJsonObject TextBlock::toJson() const
@@ -29,7 +34,11 @@ QJsonObject TextBlock::toJson() const
     obj["confidence"]     = confidence;
     obj["originalText"]   = originalText;
     obj["translatedText"] = translatedText;
+    obj["status"]         = status;
+    obj["notes"]          = notes;
+    obj["translator"]     = translator;
 
+    // boundingBox
     QJsonObject box;
     box["x"] = boundingBox.x();
     box["y"] = boundingBox.y();
@@ -37,6 +46,15 @@ QJsonObject TextBlock::toJson() const
     box["h"] = boundingBox.height();
     obj["boundingBox"] = box;
 
+    // innerRect
+    QJsonObject ir;
+    ir["x"] = innerRect.x();
+    ir["y"] = innerRect.y();
+    ir["w"] = innerRect.width();
+    ir["h"] = innerRect.height();
+    obj["innerRect"] = ir;
+
+    // polygon
     QJsonArray pts;
     for (const QPoint& p : polygon) {
         QJsonArray pt;
@@ -56,11 +74,22 @@ TextBlock TextBlock::fromJson(const QJsonObject& obj)
     b.confidence     = obj["confidence"].toDouble(1.0);
     b.originalText   = obj["originalText"].toString();
     b.translatedText = obj["translatedText"].toString();
+    b.status         = obj["status"].toString("TODO");
+    b.notes          = obj["notes"].toString();
+    b.translator     = obj["translator"].toString();
 
     if (obj.contains("boundingBox")) {
         QJsonObject box = obj["boundingBox"].toObject();
         b.boundingBox = QRect(box["x"].toInt(), box["y"].toInt(),
                               box["w"].toInt(), box["h"].toInt());
+    }
+
+    if (obj.contains("innerRect")) {
+        QJsonObject ir = obj["innerRect"].toObject();
+        b.innerRect = QRect(ir["x"].toInt(), ir["y"].toInt(),
+                            ir["w"].toInt(), ir["h"].toInt());
+    } else {
+        b.computeInnerRect();
     }
 
     if (obj.contains("polygon")) {
@@ -72,7 +101,7 @@ TextBlock TextBlock::fromJson(const QJsonObject& obj)
         }
         b.polygon = poly;
     } else {
-        b.polygon << b.boundingBox.topLeft()     << b.boundingBox.topRight()
+        b.polygon << b.boundingBox.topLeft()    << b.boundingBox.topRight()
                   << b.boundingBox.bottomRight() << b.boundingBox.bottomLeft();
     }
 

@@ -3,11 +3,10 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QDebug>
 #include <QFile>
+#include <QDebug>
 
 OCRManager::OCRManager(QObject* parent) : QObject(parent) {}
-
 
 bool OCRManager::checkPythonAvailable(QString* errorMsg)
 {
@@ -17,58 +16,52 @@ bool OCRManager::checkPythonAvailable(QString* errorMsg)
         if (errorMsg) *errorMsg = "Python introuvable : " + Config::pythonBin;
         return false;
     }
-    if (!QFile::exists(Config::pythonScript)) {
-        if (errorMsg) *errorMsg = "Script introuvable : " + Config::pythonScript;
+    if (!QFile::exists(Config::detectScript)) {
+        if (errorMsg) *errorMsg = "Script introuvable : " + Config::detectScript;
         return false;
     }
     return true;
 }
 
-
 std::vector<TextBlock> OCRManager::runOCR(const QString& imagePath,
                                            const OCRConfig& config)
 {
     QJsonObject args = config.toJson();
-    args["image_path"] = imagePath;
+    args["image_path"]    = imagePath;
+    args["inner_ratio"]   = Config::innerRectRatio;
+    args["tessdata_path"] = Config::tessdataPath;
 
     QString argsJson = QJsonDocument(args).toJson(QJsonDocument::Compact);
 
-    qDebug() << "OCRManager: lancement Python"
-             << Config::pythonBin << Config::pythonScript;
-    qDebug() << "Args:" << argsJson;
+    qDebug() << "OCRManager: lancement" << Config::pythonBin << Config::detectScript;
 
     QProcess process;
     process.setProcessChannelMode(QProcess::SeparateChannels);
-    process.start(Config::pythonBin, {Config::pythonScript, argsJson});
+    process.start(Config::pythonBin, {Config::detectScript, argsJson});
 
     if (!process.waitForStarted(10000)) {
         emit errorOccurred("Impossible de démarrer Python : " + Config::pythonBin);
         return {};
     }
-
     if (!process.waitForFinished(120000)) {
         process.kill();
-        emit errorOccurred("Timeout OCR (120s dépassé)");
+        emit errorOccurred("Timeout OCR (120s)");
         return {};
     }
 
     QByteArray stderrData = process.readAllStandardError();
     if (!stderrData.isEmpty())
-        qDebug() << "Python stderr:" << stderrData;
+        qDebug() << "detect.py stderr:" << stderrData;
 
     if (process.exitCode() != 0) {
         emit errorOccurred("Erreur Python (code " +
-                           QString::number(process.exitCode()) + "): " +
+                           QString::number(process.exitCode()) + ") :\n" +
                            QString::fromUtf8(stderrData));
         return {};
     }
 
-    QByteArray output = process.readAllStandardOutput();
-    qDebug() << "OCRManager: output reçu (" << output.size() << "bytes)";
-
-    return parseOutput(output);
+    return parseOutput(process.readAllStandardOutput());
 }
-
 
 std::vector<TextBlock> OCRManager::parseOutput(const QByteArray& json)
 {
@@ -77,12 +70,11 @@ std::vector<TextBlock> OCRManager::parseOutput(const QByteArray& json)
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(json, &err);
     if (err.error != QJsonParseError::NoError) {
-        emit errorOccurred("Erreur JSON Python : " + err.errorString());
+        emit errorOccurred("Erreur JSON : " + err.errorString());
         return blocks;
     }
-
     if (!doc.isArray()) {
-        emit errorOccurred("Réponse Python invalide (pas un tableau JSON)");
+        emit errorOccurred("Réponse Python invalide");
         return blocks;
     }
 
@@ -90,18 +82,24 @@ std::vector<TextBlock> OCRManager::parseOutput(const QByteArray& json)
     for (const QJsonValue& v : doc.array()) {
         QJsonObject obj = v.toObject();
 
-        QString text       = obj["text"].toString();
-        double  confidence = obj["confidence"].toDouble(1.0);
+        QString text = obj["raw"].toString();
+        if (text.isEmpty()) text = obj["text"].toString();
+        double conf  = obj["confidence"].toDouble(0.9);
 
-        QPolygon poly;
-        for (const QJsonValue& pt : obj["box"].toArray()) {
-            QJsonArray p = pt.toArray();
-            if (p.size() >= 2)
-                poly << QPoint(p[0].toInt(), p[1].toInt());
+        QJsonArray r = obj["rect"].toArray();
+        if (r.size() < 4) continue;
+
+        QRect rect(r[0].toInt(), r[1].toInt(), r[2].toInt(), r[3].toInt());
+        TextBlock b(id++, rect, text, conf);
+
+        if (obj.contains("inner_rect")) {
+            QJsonArray ir = obj["inner_rect"].toArray();
+            if (ir.size() == 4)
+                b.innerRect = QRect(ir[0].toInt(), ir[1].toInt(),
+                                    ir[2].toInt(), ir[3].toInt());
         }
 
-        if (!text.isEmpty() && !poly.isEmpty())
-            blocks.emplace_back(id++, poly, text, confidence);
+        blocks.push_back(b);
     }
 
     qDebug() << "OCRManager:" << blocks.size() << "blocs parsés";

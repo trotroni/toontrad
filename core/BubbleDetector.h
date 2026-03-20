@@ -4,7 +4,8 @@
 #include <QObject>
 #include <QProcess>
 #include <vector>
-#include "Bubble.h"
+#include "TextBlock.h"
+#include "OCRConfig.h"
 
 class BubbleDetector : public QObject
 {
@@ -13,19 +14,16 @@ class BubbleDetector : public QObject
 public:
     explicit BubbleDetector(QObject* parent = nullptr);
 
-    // Lance detect.py sur l'image et retourne les bulles parsées.
-    // Bloquant (waitForFinished) — appelé depuis un thread UI uniquement
-    // si l'image n'est pas trop lourde, sinon utiliser runAsync.
-    std::vector<Bubble> run(const QString& imagePath);
+    // Lance detect.py → retourne les blocs parsés
+    std::vector<TextBlock> run(const QString& imagePath, const OCRConfig& config);
 
-    // Vérification rapide : python3 + detect.py accessibles ?
     static bool checkAvailable(QString* errorMsg = nullptr);
 
-    signals:
-        void errorOccurred(const QString& message);
+signals:
+    void errorOccurred(const QString& message);
 
 private:
-    std::vector<Bubble> parseJson(const QByteArray& json);
+    std::vector<TextBlock> parseOutput(const QByteArray& json);
 };
 
 #endif // BUBBLEDETECTOR_H

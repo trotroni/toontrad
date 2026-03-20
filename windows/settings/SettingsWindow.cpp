@@ -14,47 +14,71 @@ SettingsWindow::SettingsWindow(const OCRConfig& config, QWidget* parent)
     ui->setupUi(this);
     setModal(true);
 
-    auto langs        = ToonTrad::languageList();
-    auto langsDisplay = ToonTrad::languageDisplayNames();
+    // Langue
+    auto langs     = ToonTrad::languageList();
+    auto langsDisp = ToonTrad::languageDisplayNames();
     for (int i = 0; i < langs.size(); ++i)
-        ui->comboLanguage->addItem(langsDisplay[i], langs[i]);
+        ui->comboLanguage->addItem(langsDisp[i], langs[i]);
     int li = langs.indexOf(config.language);
     if (li >= 0) ui->comboLanguage->setCurrentIndex(li);
 
+    // PSM
     const QList<int> psmVals = {3, 6, 11, 13};
     ui->comboPSM->setCurrentIndex(psmVals.indexOf(config.psmMode));
 
+    // Confidence
     ui->sliderConfidence->setValue(static_cast<int>(config.confidenceThreshold * 100));
     ui->lblConfValue->setText(QString::number(ui->sliderConfidence->value()) + "%");
+
+    // Min area
     ui->spinMinArea->setValue(config.minBubbleArea);
 
+    // Inner ratio
+    ui->sliderInnerRatio->setValue(static_cast<int>(Config::innerRectRatio * 100));
+    ui->lblInnerRatio->setText(QString::number(ui->sliderInnerRatio->value()) + "%");
+
+    // VRAM / RAM — initialisés depuis config pour être synchronisés avec MainWindow
+    ui->sliderVRAM->setValue(static_cast<int>(config.gpuMemFraction * 100));
+    ui->lblVRAMVal->setText(QString::number(ui->sliderVRAM->value()) + "%");
+    ui->sliderRAM->setValue(config.ramGb);
+    ui->lblRAMVal->setText(QString::number(config.ramGb) + " GB");
+
+    // Python
     ui->editPythonBin->setText(Config::pythonBin);
-    ui->editPythonScript->setText(Config::pythonScript);
+    ui->editDetectScript->setText(Config::detectScript);
 
-    connect(ui->sliderConfidence, &QSlider::valueChanged,
-            this, &SettingsWindow::onConfidenceChanged);
-    connect(ui->spinMinArea, QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &SettingsWindow::onMinAreaChanged);
+    // Sliders
+    connect(ui->sliderConfidence, &QSlider::valueChanged, this, &SettingsWindow::onConfidenceChanged);
+    connect(ui->spinMinArea, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsWindow::onMinAreaChanged);
+    connect(ui->sliderInnerRatio, &QSlider::valueChanged, this, [this](int v) {
+        ui->lblInnerRatio->setText(QString::number(v) + "%");
+    });
+    connect(ui->sliderVRAM, &QSlider::valueChanged, this, [this](int v) {
+        ui->lblVRAMVal->setText(QString::number(v) + "%");
+    });
+    connect(ui->sliderRAM, &QSlider::valueChanged, this, [this](int v) {
+        ui->lblRAMVal->setText(QString::number(v) + " GB");
+    });
 
+    // Browse
     connect(ui->btnBrowsePython, &QPushButton::clicked, this, [this]() {
         QString p = QFileDialog::getOpenFileName(this, "Sélectionner Python");
         if (!p.isEmpty()) ui->editPythonBin->setText(p);
     });
-
     connect(ui->btnBrowseScript, &QPushButton::clicked, this, [this]() {
-        QString p = QFileDialog::getOpenFileName(this, "Sélectionner main_ocr.py",
-                                                  "", "Python (*.py)");
-        if (!p.isEmpty()) ui->editPythonScript->setText(p);
+        QString p = QFileDialog::getOpenFileName(this, "Sélectionner detect.py", "", "Python (*.py)");
+        if (!p.isEmpty()) ui->editDetectScript->setText(p);
     });
 
+    // Test
     connect(ui->btnTestPython, &QPushButton::clicked, this, [this]() {
         Config::pythonBin    = ui->editPythonBin->text();
-        Config::pythonScript = ui->editPythonScript->text();
+        Config::detectScript = ui->editDetectScript->text();
         QString err;
         if (OCRManager::checkPythonAvailable(&err))
-            QMessageBox::information(this, "Python OK", "Python et le script sont accessibles.");
+            QMessageBox::information(this, "OK", "Python et detect.py sont accessibles.");
         else
-            QMessageBox::critical(this, "Erreur Python", err);
+            QMessageBox::critical(this, "Erreur", err);
     });
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -78,15 +102,19 @@ OCRConfig SettingsWindow::config() const
 {
     OCRConfig c = m_config;
 
-    int li = ui->comboLanguage->currentIndex();
-    c.language = ToonTrad::languageList().value(li, "en");
+    auto langs = ToonTrad::languageList();
+    c.language = langs.value(ui->comboLanguage->currentIndex(), "en");
 
     const QList<int> psmVals = {3, 6, 11, 13};
-    int pi = ui->comboPSM->currentIndex();
-    c.psmMode = psmVals.value(pi, 6);
+    c.psmMode = psmVals.value(ui->comboPSM->currentIndex(), 6);
 
-    Config::pythonBin    = ui->editPythonBin->text();
-    Config::pythonScript = ui->editPythonScript->text();
+    c.gpuMemFraction = ui->sliderVRAM->value() / 100.0;
+    c.ramGb          = ui->sliderRAM->value();
+    c.ramFraction    = c.ramGb / 64.0;
+
+    Config::innerRectRatio = ui->sliderInnerRatio->value() / 100.0;
+    Config::pythonBin      = ui->editPythonBin->text();
+    Config::detectScript   = ui->editDetectScript->text();
     Config::save();
 
     return c;

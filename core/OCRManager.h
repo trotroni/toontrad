@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QProcess>
-#include <QImage>
 #include <vector>
 #include "TextBlock.h"
 #include "OCRConfig.h"
@@ -16,7 +15,7 @@ public:
     explicit OCRManager(QObject* parent = nullptr);
 
     std::vector<TextBlock> runOCR(const QString& imagePath,
-                                  const OCRConfig& config);
+                                   const OCRConfig& config);
 
     static bool checkPythonAvailable(QString* errorMsg = nullptr);
 

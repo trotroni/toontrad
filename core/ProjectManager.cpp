@@ -13,7 +13,6 @@ const QStringList Project::IMAGE_EXTENSIONS = {
     "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp", "*.tiff", "*.tif"
 };
 
-
 QString Project::absolutePath(const ImagePage& page) const
 {
     return QDir(rootPath).absoluteFilePath(page.relativePath);
@@ -28,8 +27,14 @@ ImagePage* Project::findPage(const QString& relativePath)
 
 void Project::scanImages()
 {
-    QDir root(rootPath);
-    if (!root.exists()) return;
+    // Scanne uniquement raw/ — dossier dédié aux images du projet
+    QString spritesPath = QDir(rootPath).filePath("raw");
+    QDir spritesDir(spritesPath);
+
+    if (!spritesDir.exists()) {
+        qDebug() << "Project::scanImages: raw/ introuvable dans" << rootPath;
+        return;
+    }
 
     QMap<QString, ImagePage> existing;
     for (const auto& p : pages)
@@ -37,13 +42,12 @@ void Project::scanImages()
 
     pages.clear();
 
-    QDirIterator it(rootPath, IMAGE_EXTENSIONS,
+    QDirIterator it(spritesPath, IMAGE_EXTENSIONS,
                     QDir::Files, QDirIterator::Subdirectories);
-
     QStringList found;
     while (it.hasNext()) {
         it.next();
-        found << root.relativeFilePath(it.filePath());
+        found << QDir(rootPath).relativeFilePath(it.filePath());
     }
     found.sort();
 
@@ -57,7 +61,8 @@ void Project::scanImages()
         }
     }
 
-    qDebug() << "Project::scanImages:" << pages.size() << "images dans" << rootPath;
+    qDebug() << "Project::scanImages:" << pages.size()
+             << "images dans" << spritesPath;
 }
 
 bool Project::load()
@@ -105,12 +110,10 @@ bool Project::save() const
         QJsonObject po;
         po["file"]    = page.relativePath;
         po["ocrDone"] = page.ocrDone;
-
         QJsonArray blocks;
         for (const auto& b : page.blocks)
             blocks.append(b.toJson());
         po["blocks"] = blocks;
-
         pagesArr.append(po);
     }
     root["pages"] = pagesArr;
@@ -119,11 +122,9 @@ bool Project::save() const
     if (!file.open(QIODevice::WriteOnly)) return false;
     file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
     file.close();
-
-    qDebug() << "Project::save → " << dir.filePath("project.json");
+    qDebug() << "Project::save →" << dir.filePath("project.json");
     return true;
 }
-
 
 ProjectManager& ProjectManager::instance()
 {

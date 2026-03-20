@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="ToonTrad">
+  <title>ToonTrad</title>
+  <!-- Background with bottom-right corner cut -->
+  <polygon points="10,0 100,0 100,90 90,100 0,100 0,10" fill="#e63b2e"/>
+  <!-- T left — white (Toon) -->
+  <rect x="11" y="13" width="36" height="9" rx="1" fill="white"/>
+  <rect x="23" y="22" width="12" height="38" rx="1" fill="white"/>
+  <!-- T right — dark (Trad), overlapping -->
+  <rect x="41" y="29" width="48" height="9" rx="1" fill="#0b0b0b"/>
+  <rect x="58" y="38" width="12" height="50" rx="1" fill="#0b0b0b"/>
+</svg>

@@ -4,32 +4,28 @@
 #include <QString>
 #include <QStringList>
 #include <QList>
-#include <QJsonObject>
 #include <vector>
 #include "TextBlock.h"
 
 struct ImagePage
 {
     QString relativePath;
-    bool    ocrDone  = false;
+    bool    ocrDone = false;
     std::vector<TextBlock> blocks;
 };
-
 
 class Project
 {
 public:
-    QString         name;
-    QString         rootPath;
+    QString          name;
+    QString          rootPath;
     QList<ImagePage> pages;
 
     void scanImages();
-
     bool load();
     bool save() const;
 
-    QString absolutePath(const ImagePage& page) const;
-
+    QString    absolutePath(const ImagePage& page) const;
     ImagePage* findPage(const QString& relativePath);
 
 private:
@@ -45,8 +41,7 @@ public:
     void save() const;
 
     Project* addProject(const QString& rootPath);
-
-    void removeProject(const QString& rootPath);
+    void     removeProject(const QString& rootPath);
 
     QList<Project>& projects() { return m_projects; }
 

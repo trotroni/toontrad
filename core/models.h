@@ -12,7 +12,7 @@ inline QStringList engineList() {
 
 inline QStringList engineDisplayNames() {
     return {"Auto (détection matériel)", "PaddleOCR", "EasyOCR",
-            "TrOCR (Microsoft)", "manga-ocr", "Tesseract (fallback CPU)"};
+            "TrOCR (Microsoft)", "manga-ocr", "Tesseract (défaut CPU)"};
 }
 
 inline QStringList languageList() {
@@ -22,6 +22,10 @@ inline QStringList languageList() {
 inline QStringList languageDisplayNames() {
     return {"Anglais", "Japonais", "Chinois", "Français",
             "Allemand", "Espagnol", "Coréen"};
+}
+
+inline QStringList statusList() {
+    return {"TODO", "WIP", "TL", "REV", "OK", "FIX"};
 }
 
 }

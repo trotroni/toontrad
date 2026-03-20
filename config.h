@@ -2,90 +2,32 @@
 #define CONFIG_H
 
 #include <QString>
-#include <QStringList>
-#include <QSettings>
-#include <QCoreApplication>
-#include <QDir>
-#include <QFile>
+#include "core/OCRConfig.h"
 
 class Config
 {
 public:
-    // ── Mode ──────────────────────────────────────────────────────────────
-    // "image" → une seule image | "folder" → dossier entier
-    inline static QString mode         = "folder";
-    inline static QString imagePath    = "";
-    inline static QString folderPath   = "";
+    inline static const QString VERSION_STR = "1.0.0";
 
-    // ── Output ────────────────────────────────────────────────────────────
-    inline static QString outputFolder = "output";
+    // Python
+    static QString pythonBin;
+    static QString detectScript;
+    static QString tessdataPath;
 
-    // ── Inner rect ────────────────────────────────────────────────────────
-    // Ratio du rectangle interne par rapport au rectangle externe (0.0 – 1.0)
-    inline static double innerRectRatio = 0.85;
+    // App
+    static bool    darkMode;
+    static QString deeplApiKey;
 
-    // ── Python ────────────────────────────────────────────────────────────
-    inline static QString pythonBin    = "python3";
-    inline static QString detectScript = "";   // résolu automatiquement au load()
+    // Inner rect ratio
+    static double  innerRectRatio;
 
-    // ── OCR ───────────────────────────────────────────────────────────────
-    inline static QString ocrLang      = "eng";
-    inline static int     psmMode      = 6;
-    inline static int     minArea      = 2000;
-    inline static int     minTextLen   = 3;
+    // Paramètres OCR persistants
+    static OCRConfig ocrConfig;
 
-    // ── Persistence ───────────────────────────────────────────────────────
-    static void load()
-    {
-        QSettings s("ToonTrad", "ToonTrad");
-        mode           = s.value("mode",           mode).toString();
-        imagePath      = s.value("imagePath",      imagePath).toString();
-        folderPath     = s.value("folderPath",     folderPath).toString();
-        outputFolder   = s.value("outputFolder",   outputFolder).toString();
-        innerRectRatio = s.value("innerRectRatio", innerRectRatio).toDouble();
-        pythonBin      = s.value("pythonBin",      pythonBin).toString();
-        ocrLang        = s.value("ocrLang",        ocrLang).toString();
-        psmMode        = s.value("psmMode",        psmMode).toInt();
-        minArea        = s.value("minArea",        minArea).toInt();
-        minTextLen     = s.value("minTextLen",     minTextLen).toInt();
-
-        // Résolution automatique du script detect.py
-        resolveDetectScript();
-    }
-
-    static void save()
-    {
-        QSettings s("ToonTrad", "ToonTrad");
-        s.setValue("mode",           mode);
-        s.setValue("imagePath",      imagePath);
-        s.setValue("folderPath",     folderPath);
-        s.setValue("outputFolder",   outputFolder);
-        s.setValue("innerRectRatio", innerRectRatio);
-        s.setValue("pythonBin",      pythonBin);
-        s.setValue("ocrLang",        ocrLang);
-        s.setValue("psmMode",        psmMode);
-        s.setValue("minArea",        minArea);
-        s.setValue("minTextLen",     minTextLen);
-    }
-
-private:
-    static void resolveDetectScript()
-    {
-        QString appDir = QCoreApplication::applicationDirPath();
-        QStringList candidates = {
-            appDir + "/python/detect.py",
-            appDir + "/../python/detect.py",
-            appDir + "/../../python/detect.py",
-            QDir::currentPath() + "/python/detect.py",
-        };
-        for (const QString& c : candidates) {
-            if (QFile::exists(c)) {
-                detectScript = QDir::cleanPath(c);
-                return;
-            }
-        }
-        detectScript = "python/detect.py"; // fallback relatif
-    }
+    static void load();
+    static void save();
+    static void saveOCR(const OCRConfig& config);
+    static OCRConfig loadOCR();
 };
 
 #endif // CONFIG_H

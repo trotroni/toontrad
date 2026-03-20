@@ -1,59 +1,54 @@
 #ifndef IMAGECANVAS_H
 #define IMAGECANVAS_H
 
-#include <QLabel>
-#include <QPixmap>
-#include <QMouseEvent>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
 #include <QWheelEvent>
-#include <QPaintEvent>
+#include <QMouseEvent>
+#include <QMap>
 #include <vector>
-#include "../core/Bubble.h"
+#include "../../core/TextBlock.h"
 
-class ImageCanvas : public QLabel
+class ImageCanvas : public QGraphicsView
 {
     Q_OBJECT
 
 public:
     explicit ImageCanvas(QWidget* parent = nullptr);
 
-    void setImage(const QPixmap& pixmap);
-    void setBubbles(const std::vector<Bubble>& bubbles);
-    void clearBubbles();
-
-    double zoom() const { return m_zoom; }
+    void setImage(const QImage& image);
+    void setBlocks(const std::vector<TextBlock>& blocks);
+    void clearBlocks();
+    void highlightBlock(int id);   // surligne une bulle (sync TextWindow → ImageWindow)
 
     signals:
-        // Clic droit sur une bulle → suppression
-        void bubbleDeleteRequested(int id);
-
-    // Drag terminé en mode ajout → nouveau rect sélectionné
-    void bubbleAddRequested(QRect rect);
-
-public slots:
-    void setAddMode(bool enabled);
+        void blockSelected(int id);             // clic sur une bulle
+    void blockDeleteRequested(int id);      // menu contextuel → supprimer
+    void addBubbleRequested(QPointF scenePos); // menu contextuel → ajouter
+    void dragBubbleRequested(QRectF rect);  // drag terminé → nouvelle bulle
 
 protected:
     void wheelEvent(QWheelEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
-    void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
-    double              m_zoom      = 1.0;
-    bool                m_addMode   = false;
+    QGraphicsScene*       m_scene;
+    QGraphicsPixmapItem*  m_pixmapItem = nullptr;
+    QMap<int, QGraphicsItem*> m_blockItems;
 
-    // Drag sélection
-    bool                m_selecting = false;
-    QPoint              m_dragStart;
-    QPoint              m_dragCurrent;
+    // Drag pour ajout manuel
+    bool    m_dragging   = false;
+    QPointF m_dragStart;
+    QGraphicsRectItem* m_dragRect = nullptr;
 
-    QPixmap             m_pixmap;
-    std::vector<Bubble> m_bubbles;
 
-    // Convertit coordonnées widget → coordonnées image
-    QPoint toImage(const QPoint& widgetPos) const;
-    QPoint toWidget(const QPoint& imagePos) const;
+
+    QColor colorForConfidence(double conf) const;
+    void   drawBlocks(const std::vector<TextBlock>& blocks);
 };
 
 #endif // IMAGECANVAS_H

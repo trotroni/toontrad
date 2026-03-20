@@ -1,6 +1,5 @@
 """
 ocr.py — Extraction de texte via Tesseract.
-Appelé par detect.py sur chaque crop de bulle.
 """
 import pytesseract
 

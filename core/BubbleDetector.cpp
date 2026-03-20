@@ -8,48 +8,33 @@
 
 BubbleDetector::BubbleDetector(QObject* parent) : QObject(parent) {}
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Vérification disponibilité
-// ─────────────────────────────────────────────────────────────────────────────
-
 bool BubbleDetector::checkAvailable(QString* errorMsg)
 {
-    // 1. Python accessible ?
     QProcess p;
     p.start(Config::pythonBin, {"--version"});
     if (!p.waitForFinished(5000)) {
         if (errorMsg) *errorMsg = "Python introuvable : " + Config::pythonBin;
         return false;
     }
-
-    // 2. Script detect.py présent ?
     if (!QFile::exists(Config::detectScript)) {
         if (errorMsg) *errorMsg = "Script introuvable : " + Config::detectScript;
         return false;
     }
-
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Lancement détection
-// ─────────────────────────────────────────────────────────────────────────────
-
-std::vector<Bubble> BubbleDetector::run(const QString& imagePath)
+std::vector<TextBlock> BubbleDetector::run(const QString& imagePath,
+                                            const OCRConfig& config)
 {
-    // Construit le JSON d'arguments (identique aux clés attendues par detect.py)
-    QJsonObject args;
-    args["image_path"]   = imagePath;
-    args["lang"]         = Config::ocrLang;
-    args["psm"]          = Config::psmMode;
-    args["min_area"]     = Config::minArea;
-    args["min_text_len"] = Config::minTextLen;
-    args["inner_ratio"]  = Config::innerRectRatio;
+    // Construit le JSON d'arguments pour detect.py
+    QJsonObject args = config.toJson();
+    args["image_path"]    = imagePath;
+    args["inner_ratio"]   = Config::innerRectRatio;
+    args["tessdata_path"] = Config::tessdataPath;
 
     QString argsJson = QJsonDocument(args).toJson(QJsonDocument::Compact);
 
-    qDebug() << "BubbleDetector: lancement" << Config::pythonBin
-             << Config::detectScript << argsJson;
+    qDebug() << "BubbleDetector: lancement" << Config::pythonBin << Config::detectScript;
 
     QProcess process;
     process.setProcessChannelMode(QProcess::SeparateChannels);
@@ -59,58 +44,66 @@ std::vector<Bubble> BubbleDetector::run(const QString& imagePath)
         emit errorOccurred("Impossible de démarrer Python : " + Config::pythonBin);
         return {};
     }
-
-    // Timeout 120s (images lourdes + OCR peuvent être lents)
     if (!process.waitForFinished(120000)) {
         process.kill();
-        emit errorOccurred("Timeout détection (120s dépassé)");
+        emit errorOccurred("Timeout détection (120s)");
         return {};
     }
 
-    // Affiche stderr Python dans la console Qt (utile pour debug)
     QByteArray stderrData = process.readAllStandardError();
     if (!stderrData.isEmpty())
         qDebug() << "detect.py stderr:" << stderrData;
 
     if (process.exitCode() != 0) {
-        emit errorOccurred(
-            "Erreur Python (code " + QString::number(process.exitCode()) + ") :\n" +
-            QString::fromUtf8(stderrData));
+        emit errorOccurred("Erreur Python (code " +
+                           QString::number(process.exitCode()) + ") :\n" +
+                           QString::fromUtf8(stderrData));
         return {};
     }
 
-    QByteArray output = process.readAllStandardOutput();
-    qDebug() << "BubbleDetector: réponse reçue (" << output.size() << "bytes)";
-
-    return parseJson(output);
+    return parseOutput(process.readAllStandardOutput());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Parse JSON → vector<Bubble>
-// ─────────────────────────────────────────────────────────────────────────────
-
-std::vector<Bubble> BubbleDetector::parseJson(const QByteArray& json)
+std::vector<TextBlock> BubbleDetector::parseOutput(const QByteArray& json)
 {
-    std::vector<Bubble> bubbles;
+    std::vector<TextBlock> blocks;
 
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(json, &err);
     if (err.error != QJsonParseError::NoError) {
-        emit errorOccurred("Erreur JSON Python : " + err.errorString());
-        return bubbles;
+        emit errorOccurred("Erreur JSON : " + err.errorString());
+        return blocks;
     }
-
     if (!doc.isArray()) {
-        emit errorOccurred("Réponse Python invalide (pas un tableau JSON)");
-        return bubbles;
+        emit errorOccurred("Réponse Python invalide (pas un tableau)");
+        return blocks;
     }
 
+    int id = 1;
     for (const QJsonValue& v : doc.array()) {
-        Bubble b = Bubble::fromJson(v.toObject());
-        if (b.id > 0 && !b.rect.isEmpty())
-            bubbles.push_back(b);
+        QJsonObject obj = v.toObject();
+
+        QString text = obj["raw"].toString();
+        if (text.isEmpty()) text = obj["text"].toString();
+        double conf  = obj["confidence"].toDouble(0.9);
+
+        QJsonArray r = obj["rect"].toArray();
+        if (r.size() < 4) continue;
+
+        QRect rect(r[0].toInt(), r[1].toInt(), r[2].toInt(), r[3].toInt());
+        TextBlock b(id++, rect, text, conf);
+
+        // inner_rect depuis Python si présent
+        if (obj.contains("inner_rect")) {
+            QJsonArray ir = obj["inner_rect"].toArray();
+            if (ir.size() == 4)
+                b.innerRect = QRect(ir[0].toInt(), ir[1].toInt(),
+                                    ir[2].toInt(), ir[3].toInt());
+        }
+
+        blocks.push_back(b);
     }
 
-    qDebug() << "BubbleDetector:" << bubbles.size() << "bulles parsées";
-    return bubbles;
+    qDebug() << "BubbleDetector:" << blocks.size() << "blocs parsés";
+    return blocks;
 }
