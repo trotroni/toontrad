@@ -98,20 +98,20 @@ function updateCounter() {
 
 // Fetch repo creation date from GitHub API
 fetch('https://api.github.com/repos/trotroni/toontrad')
-    .then(r => r.json())
-    .then(data => {
-      if (data.created_at) {
-        PROJECT_START = new Date(data.created_at);
-        updateCounter();
-        counterInterval = setInterval(updateCounter, 1000);
-      }
-    })
-    .catch(() => {
-      // Fallback: use repo creation date from last known API response
-      PROJECT_START = new Date('2026-02-27T22:42:53Z');
+  .then(r => r.json())
+  .then(data => {
+    if (data.created_at) {
+      PROJECT_START = new Date(data.created_at);
       updateCounter();
       counterInterval = setInterval(updateCounter, 1000);
-    });
+    }
+  })
+  .catch(() => {
+    // Fallback: use repo creation date from last known API response
+    PROJECT_START = new Date('2026-02-27T22:42:53Z');
+    updateCounter();
+    counterInterval = setInterval(updateCounter, 1000);
+  });
 
 // ── Theme toggle ─────────────────────────
 const themeToggle = document.getElementById('themeToggle');
@@ -138,3 +138,117 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
   });
 });
+
+// ── Releases ─────────────────────────────
+function formatBytes(bytes) {
+  if (bytes < 1024)       return bytes + ' B';
+  if (bytes < 1024*1024)  return (bytes/1024).toFixed(0) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+}
+
+function dlIcon() {
+  return `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-6 2h12v1.5H2V14z"/></svg>`;
+}
+
+function buildReleaseCard(release, isLatest) {
+  const assets = release.assets || [];
+  const notes  = (release.body || '').trim();
+  const tagStr = release.tag_name || 'v?';
+
+  const assetsHTML = assets.length
+    ? `<div class="release-assets-title">Assets (${assets.length})</div>
+       <div class="release-assets">
+         ${assets.map(a => `
+           <div class="asset-row">
+             <div class="asset-info">
+               <span class="asset-name">${a.name}</span>
+               <span class="asset-size">${formatBytes(a.size)} · ${a.download_count} téléchargement${a.download_count !== 1 ? 's' : ''}</span>
+             </div>
+             <a class="asset-dl" href="${a.browser_download_url}" download>
+               ${dlIcon()} Télécharger
+             </a>
+           </div>`).join('')}
+       </div>`
+    : `<div class="release-no-assets">Aucun asset joint à cette release.</div>`;
+
+  const notesHTML = notes
+    ? `<div class="release-notes">${notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+    : '';
+
+  const card = document.createElement('div');
+  card.className = 'release-card' + (isLatest ? ' latest' : '');
+  card.innerHTML = `
+    <div class="release-header">
+      <span class="release-tag">${tagStr}</span>
+      <span class="release-name">${release.name || tagStr}</span>
+      <span class="release-date">${formatDate(release.published_at)}</span>
+      <span class="release-toggle">▼</span>
+    </div>
+    <div class="release-body">
+      ${notesHTML}
+      ${assetsHTML}
+      <a class="release-gh-link" href="${release.html_url}" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Voir sur GitHub
+      </a>
+    </div>`;
+
+  // Toggle accordion
+  card.querySelector('.release-header').addEventListener('click', () => {
+    card.classList.toggle('open');
+  });
+
+  // Auto-open latest
+  if (isLatest) card.classList.add('open');
+
+  return card;
+}
+
+function loadReleases() {
+  const elLoading = document.getElementById('releases-loading');
+  const elEmpty   = document.getElementById('releases-empty');
+  const elError   = document.getElementById('releases-error');
+  const elList    = document.getElementById('releases-list');
+  if (!elList) return;
+
+  fetch('https://api.github.com/repos/trotroni/toontrad/releases')
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(releases => {
+      elLoading.style.display = 'none';
+
+      if (!releases.length) {
+        elEmpty.style.display = 'block';
+        return;
+      }
+
+      elList.style.display = 'block';
+      releases.forEach((release, i) => {
+        elList.appendChild(buildReleaseCard(release, i === 0));
+      });
+    })
+    .catch(() => {
+      elLoading.style.display = 'none';
+      elError.style.display = 'block';
+    });
+}
+
+// Lazy load releases when section scrolls into view
+const releasesSection = document.getElementById('releases');
+if (releasesSection) {
+  const relObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      loadReleases();
+      relObs.disconnect();
+    }
+  }, { threshold: 0.1 });
+  relObs.observe(releasesSection);
+}
