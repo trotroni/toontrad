@@ -3,6 +3,10 @@
 #include "config.h"
 #include "windows/main/MainWindow.h"
 
+#include <QDebug>
+#include <QtGlobal>
+
+
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
@@ -14,6 +18,8 @@ int main(int argc, char* argv[])
 
     MainWindow window;
     window.show();
+
+    qDebug() << QT_VERSION_STR;
 
     return app.exec();
 }

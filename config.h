@@ -7,7 +7,7 @@
 class Config
 {
 public:
-    inline static const QString VERSION_STR = "1.0.0";
+    inline static const QString VERSION_STR = "1.0.0-beta";
 
     // Python
     static QString pythonBin;
