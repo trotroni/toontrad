@@ -783,3 +783,138 @@ body.light .theme-icon-dark  { display: none; }
   .req-item:nth-last-child(-n+3) { border-bottom: 1px solid var(--border); }
   .req-item:last-child { border-bottom: none; }
 }
+
+/* ── Releases ── */
+.releases-loading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  padding: 40px 0;
+}
+.releases-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border-hi);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.releases-empty {
+  text-align: center;
+  padding: 80px 40px;
+  border: 1px solid var(--border-hi);
+  background: var(--bg-card);
+}
+.releases-empty-icon { font-size: 40px; margin-bottom: 20px; }
+.releases-empty-title {
+  font-family: var(--font-disp);
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 12px;
+}
+.releases-empty-desc { font-size: 12px; color: var(--text-dim); max-width: 400px; margin: 0 auto; }
+
+.release-card {
+  border: 1px solid var(--border-hi);
+  background: var(--bg-card);
+  margin-bottom: -1px;
+  transition: border-color 0.2s;
+  position: relative;
+}
+.release-card:hover { border-color: var(--accent); z-index: 1; }
+.release-card.latest::before {
+  content: 'LATEST';
+  position: absolute;
+  top: -1px; right: 28px;
+  background: var(--accent);
+  color: white;
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+}
+.release-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  cursor: pointer;
+  user-select: none;
+}
+.release-tag {
+  font-family: var(--font-disp);
+  font-size: 28px;
+  letter-spacing: 2px;
+  color: #fff;
+  min-width: 120px;
+}
+.release-name { font-size: 13px; color: var(--text-dim); flex: 1; }
+.release-date { font-size: 10px; letter-spacing: 1px; color: var(--text-dim); white-space: nowrap; }
+.release-toggle { font-size: 14px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.release-card.open .release-toggle { transform: rotate(180deg); }
+
+.release-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 24px 28px;
+}
+.release-card.open .release-body { display: block; }
+
+.release-notes {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.9;
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.release-notes::-webkit-scrollbar { width: 4px; }
+.release-notes::-webkit-scrollbar-track { background: var(--border); }
+.release-notes::-webkit-scrollbar-thumb { background: var(--accent-dim); }
+
+.release-assets-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+.release-assets { display: flex; flex-direction: column; gap: 8px; }
+
+.asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border: 1px solid var(--border-hi);
+  background: var(--bg-card2);
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: border-color 0.2s;
+}
+.asset-row:hover { border-color: var(--accent); }
+.asset-info { display: flex; flex-direction: column; gap: 4px; }
+.asset-name { font-size: 12px; color: var(--text); font-family: var(--font-mono); }
+.asset-size { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
+
+.asset-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: 1px solid var(--accent);
+  transition: background 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.asset-dl:hover { background: #c4312a; border-color: #c4312a; }
+
+.release-no-assets { font-size: 12px; color: var(--text-dim); padding: 16px 0; }
+.release-gh-link { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-dim); margin-top: 16px; transition: color 0.2s; }
+.release-gh-link:hover { color: var(--accent); }
