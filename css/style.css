@@ -449,7 +449,7 @@ code {
   padding: 3px 8px; border: 1px solid;
 }
 .etag.gpu { border-color: var(--blue); color: var(--blue); }
-.etag.cpu { border-color: #555; color: #555; }
+.etag.cpu { border-color: #e63b2e; color: #e63b2e; }
 .etag.lang { border-color: var(--border-hi); color: var(--text-dim); }
 
 .engine-logic {
