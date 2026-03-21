@@ -98,20 +98,20 @@ function updateCounter() {
 
 // Fetch repo creation date from GitHub API
 fetch('https://api.github.com/repos/trotroni/toontrad')
-  .then(r => r.json())
-  .then(data => {
-    if (data.created_at) {
-      PROJECT_START = new Date(data.created_at);
+    .then(r => r.json())
+    .then(data => {
+      if (data.created_at) {
+        PROJECT_START = new Date(data.created_at);
+        updateCounter();
+        counterInterval = setInterval(updateCounter, 1000);
+      }
+    })
+    .catch(() => {
+      // Fallback: use repo creation date from last known API response
+      PROJECT_START = new Date('2026-02-27T22:42:53Z');
       updateCounter();
       counterInterval = setInterval(updateCounter, 1000);
-    }
-  })
-  .catch(() => {
-    // Fallback: use repo creation date from last known API response
-    PROJECT_START = new Date('2026-02-27T22:42:53Z');
-    updateCounter();
-    counterInterval = setInterval(updateCounter, 1000);
-  });
+    });
 
 // ── Theme toggle ─────────────────────────
 const themeToggle = document.getElementById('themeToggle');
@@ -162,7 +162,7 @@ function buildReleaseCard(release, isLatest) {
   const tagStr = release.tag_name || 'v?';
 
   const assetsHTML = assets.length
-    ? `<div class="release-assets-title">Assets (${assets.length})</div>
+      ? `<div class="release-assets-title">Assets (${assets.length})</div>
        <div class="release-assets">
          ${assets.map(a => `
            <div class="asset-row">
@@ -175,11 +175,15 @@ function buildReleaseCard(release, isLatest) {
              </a>
            </div>`).join('')}
        </div>`
-    : `<div class="release-no-assets">Aucun asset joint à cette release.</div>`;
+      : `<div class="release-no-assets">Aucun asset joint à cette release.</div>`;
 
   const notesHTML = notes
-    ? `<div class="release-notes">${notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
-    : '';
+      ? `<div class="release-notes release-md">${
+          typeof marked !== 'undefined'
+              ? marked.parse(notes, { breaks: true, gfm: true })
+              : notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      }</div>`
+      : '';
 
   const card = document.createElement('div');
   card.className = 'release-card' + (isLatest ? ' latest' : '');
@@ -218,27 +222,27 @@ function loadReleases() {
   if (!elList) return;
 
   fetch('https://api.github.com/repos/trotroni/toontrad/releases')
-    .then(r => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(releases => {
-      elLoading.style.display = 'none';
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(releases => {
+        elLoading.style.display = 'none';
 
-      if (!releases.length) {
-        elEmpty.style.display = 'block';
-        return;
-      }
+        if (!releases.length) {
+          elEmpty.style.display = 'block';
+          return;
+        }
 
-      elList.style.display = 'block';
-      releases.forEach((release, i) => {
-        elList.appendChild(buildReleaseCard(release, i === 0));
+        elList.style.display = 'block';
+        releases.forEach((release, i) => {
+          elList.appendChild(buildReleaseCard(release, i === 0));
+        });
+      })
+      .catch(() => {
+        elLoading.style.display = 'none';
+        elError.style.display = 'block';
       });
-    })
-    .catch(() => {
-      elLoading.style.display = 'none';
-      elError.style.display = 'block';
-    });
 }
 
 // Lazy load releases when section scrolls into view
