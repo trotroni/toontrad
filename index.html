@@ -372,7 +372,7 @@
         <div class="comp-name">ProjectManager</div>
         <p class="comp-desc">Singleton. Gère les projets via <code>.ttproject</code>. Scan automatique des images (PNG, JPG, WebP, TIFF…). Persistance des préférences via QSettings.</p>
       </div>
-      <div class="comp-card reveal">
+      <div class="comp-card reveal" style="display: none;">
         <div class="comp-tag cpp-tag">C++</div>
         <div class="comp-name">BubbleDetector</div>
         <p class="comp-desc">Flood fill depuis un pixel cliqué. Remonte vers le blanc le plus proche (rayon 80px), détecte la région, filtre par aire et ratio largeur/hauteur.</p>
@@ -380,12 +380,12 @@
       <div class="comp-card reveal">
         <div class="comp-tag cpp-tag">C++</div>
         <div class="comp-name">Exporter</div>
-        <p class="comp-desc">Rendu du texte traduit sur l'image (QPainter). Export <code>.json</code> (avec champs Photoshop), <code>.txt</code> tabulé, <code>.png</code> rendu final.</p>
+        <p class="comp-desc">Rendu du texte traduit sur l'image (QPainter). Export <code>.json</code> (textes RAWs, traduis, coordonnées des bulles pour Photoshop), <code>.txt</code> pour l'IA, <code>.png</code> rendu preview.</p>
       </div>
       <div class="comp-card reveal">
         <div class="comp-tag py-tag">Python</div>
         <div class="comp-name">ocr_engine.py</div>
-        <p class="comp-desc">Détection du matériel via PyTorch. Résout le device (<code>auto → cuda:N</code> ou <code>cpu</code>). Sélection automatique du moteur selon VRAM disponible.</p>
+        <p class="comp-desc">Détection du matériel via PyTorch. Résout le device (<code>auto → cuda:N</code> ou <code>cpu</code>). Sélection automatique du moteur selon <code>VRAM</code> disponible.</p>
       </div>
       <div class="comp-card reveal">
         <div class="comp-tag py-tag">Python</div>
@@ -408,7 +408,7 @@
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"blocks"</span><span class="jo">:</span> <span class="jb">[</span></div>
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jb">{</span></div>
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"id"</span><span class="jo">:</span>             <span class="jn">1</span><span class="jc">,</span></div>
-        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"confidence"</span><span class="jo">:</span>     <span class="jn">0.94</span><span class="jc">,</span></div>
+        <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"confidence"</span><span class="jo">:</span>     <span class="jn">0.94</span><span class="jc">,</span><span class="jcmt">// 94% de confiance</span></div>
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"originalText"</span><span class="jo">:</span>   <span class="js">"こんにちは！"</span><span class="jc">,</span></div>
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"translatedText"</span><span class="jo">:</span> <span class="js">"Bonjour !"</span><span class="jc">,</span></div>
         <div class="df-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"boundingBox"</span><span class="jo">:</span>   <span class="jb">{</span> <span class="jk">"x"</span><span class="jo">:</span> <span class="jn">120</span><span class="jc">,</span> <span class="jk">"y"</span><span class="jo">:</span> <span class="jn">45</span><span class="jc">,</span> <span class="jk">"w"</span><span class="jo">:</span> <span class="jn">180</span><span class="jc">,</span> <span class="jk">"h"</span><span class="jo">:</span> <span class="jn">40</span> <span class="jb">}</span><span class="jc">,</span></div>
@@ -425,11 +425,11 @@
   <!-- ═══ INSTALL ═══ -->
   <section class="section" id="install">
     <div class="section-label reveal">
-      <span class="section-num">04</span><span class="section-slash">/</span> Installer
+      <span class="section-num">04</span><span class="section-slash">/</span> Informations
     </div>
-    <h2 class="section-title reveal">Démarrage rapide</h2>
+    <h2 class="section-title reveal" style="display: none;">Démarrage rapide</h2>
 
-    <div class="install-grid">
+    <div class="install-grid" style="display: none;">
       <div class="install-step reveal">
         <div class="install-num">01</div>
         <div class="install-title">Cloner le repo</div>
