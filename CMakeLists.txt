@@ -43,46 +43,52 @@ add_custom_target(download_tessdata ALL
 
 # ── 3. Sources ────────────────────────────────────────────────────────────────
 set(SOURCES
-    main.cpp
-    config.cpp
+        main.cpp
+        config.cpp
 
-    core/TextBlock.cpp
-    core/BubbleDetector.cpp
-    core/OCRManager.cpp
-    core/Exporter.cpp
-    core/Translator.cpp
-    core/ProjectManager.cpp
+        core/TextBlock.cpp
+        core/BubbleDetector.cpp
+        core/OCRManager.cpp
+        core/Exporter.cpp
+        core/Translator.cpp
+        core/ProjectManager.cpp
 
-    gui/canvas/ImageCanvas.cpp
+        gui/canvas/ImageCanvas.cpp
 
-    windows/main/mainwindow.cpp
-    windows/OCR/OCRwindow.cpp
-    windows/settings/SettingsWindow.cpp
+        windows/main/MainWindow.cpp
+        windows/image/ImageWindow.cpp
+        windows/text/TextWindow.cpp
+        windows/project/NewProjectDialog.cpp
+        windows/settings/SettingsWindow.cpp
 )
 
 set(HEADERS
-    config.h
+        config.h
 
-    core/TextBlock.h
-    core/BubbleDetector.h
-    core/OCRManager.h
-    core/OCRConfig.h
-    core/Exporter.h
-    core/Translator.h
-    core/ProjectManager.h
-    core/models.h
+        core/TextBlock.h
+        core/BubbleDetector.h
+        core/OCRManager.h
+        core/OCRConfig.h
+        core/Exporter.h
+        core/Translator.h
+        core/ProjectManager.h
+        core/models.h
 
-    gui/canvas/ImageCanvas.h
+        gui/canvas/ImageCanvas.h
 
-    windows/main/mainwindow.h
-    windows/OCR/OCRwindow.h
-    windows/settings/SettingsWindow.h
+        windows/main/MainWindow.h
+        windows/image/ImageWindow.h
+        windows/text/TextWindow.h
+        windows/project/NewProjectDialog.h
+        windows/settings/SettingsWindow.h
 )
 
 set(UIS
-    windows/main/mainwindow.ui
-    windows/OCR/OCRwindow.ui
-    windows/settings/SettingsWindow.ui
+        windows/main/MainWindow.ui
+        windows/image/ImageWindow.ui
+        windows/text/TextWindow.ui
+        windows/project/NewProjectDialog.ui
+        windows/settings/SettingsWindow.ui
 )
 
 # ── 4. Icônes selon la plateforme ─────────────────────────────────────────────
