@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToonTrad — Étape 02 · OCR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/pipeline.css">
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+
+  <nav class="nav" id="nav">
+    <a href="/toontrad/index.html" class="nav-logo">
+      <!-- Wordmark fond sombre (défaut) -->
+      <svg class="logo-dark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#e63b2e"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="white"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="white"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="#0b0b0b"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="#0b0b0b"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="white">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+      <!-- Wordmark fond clair -->
+      <svg class="logo-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#1a1614"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="#e63b2e"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="#e63b2e"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="white"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="white"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="#1a1614">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+    </a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Changer le thème">
+      <span class="theme-icon" id="themeIcon">☽</span>
+    </button>
+    <div class="pipe-nav-steps" id="pipeNav">
+      <a href="download.html"    class="pipe-nav-step"         data-n="01">Download</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="ocr.html"         class="pipe-nav-step active"  data-n="02">OCR</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="translation.html" class="pipe-nav-step"         data-n="03">Traduction</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="validation.html"  class="pipe-nav-step"         data-n="04">Validation</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="typesetting.html" class="pipe-nav-step"         data-n="05">Typesetting</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="export.html"      class="pipe-nav-step"         data-n="06">Export</a>
+    </div>
+    <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="nav-gh">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </nav>
+
+  <div class="pipe-hero">
+    <div class="pipe-hero-bg"><div class="grid-lines"></div><div class="halftone"></div></div>
+    <div class="pipe-hero-content">
+      <div class="pipe-step-badge reveal"><span class="pipe-step-num">02</span><span class="pipe-step-sep">/</span><span class="pipe-step-total">06</span></div>
+      <h1 class="pipe-title reveal">OCR</h1>
+      <p class="pipe-tagline reveal">Extraction automatique du texte depuis les images manga.</p>
+      <div class="pipe-status-badge reveal done-badge">Fonctionnel</div>
+    </div>
+  </div>
+
+  <div class="pipe-body">
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Vue d'ensemble</span></div>
+      <div class="pipe-text-block">
+        <p>L'OCR est le cœur de ToonTrad. Le module Python <code>ocr_manager.py</code> sélectionne automatiquement le meilleur moteur selon le matériel disponible (GPU/CPU), lance l'extraction et retourne une liste de blocs <code>{text, confidence, box}</code> au frontend Qt via <code>QProcess</code>.</p>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Les 5 moteurs</span></div>
+      <div class="pipe-engines">
+        <div class="pipe-engine">
+          <div class="pipe-engine-name">PaddleOCR</div>
+          <div class="pipe-engine-tags"><span class="etag gpu">GPU</span><span class="etag lang">JA · ZH · EN · FR</span></div>
+          <p class="pipe-engine-desc">Très rapide, excellent pour les langues asiatiques. Utilisé en priorité sur GPU.</p>
+        </div>
+        <div class="pipe-engine">
+          <div class="pipe-engine-name">EasyOCR</div>
+          <div class="pipe-engine-tags"><span class="etag gpu">GPU</span><span class="etag lang">Multi</span></div>
+          <p class="pipe-engine-desc">Sélectionné automatiquement sur GPU avec moins de 6 GB de VRAM.</p>
+        </div>
+        <div class="pipe-engine">
+          <div class="pipe-engine-name">TrOCR</div>
+          <div class="pipe-engine-tags"><span class="etag gpu">GPU ≥ 6 GB</span></div>
+          <p class="pipe-engine-desc">Modèle Microsoft. Meilleure qualité pour le texte stylisé. Requiert 6 GB+ de VRAM.</p>
+        </div>
+        <div class="pipe-engine">
+          <div class="pipe-engine-name">manga-ocr</div>
+          <div class="pipe-engine-tags"><span class="etag gpu">GPU</span><span class="etag lang">JA</span></div>
+          <p class="pipe-engine-desc">Spécialisé manga japonais. Utilise EasyOCR pour détecter les zones puis reconnaît texte par texte.</p>
+        </div>
+        <div class="pipe-engine">
+          <div class="pipe-engine-name">Tesseract</div>
+          <div class="pipe-engine-tags"><span class="etag cpu">CPU</span><span class="etag lang">7 langues</span></div>
+          <p class="pipe-engine-desc">Fallback CPU léger. Modèles bundlés automatiquement au build CMake (<code>resources/tessdata/</code>).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Sélection automatique</span></div>
+      <div class="logic-block">
+        <div class="logic-line"><span class="lk">if</span> CUDA disponible:</div>
+        <div class="logic-line indent"><span class="lk">if</span> VRAM <span class="lo">≥</span> <span class="ln">6</span> GB → <span class="lv">TrOCR</span></div>
+        <div class="logic-line indent"><span class="lk">else</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span class="lv">EasyOCR</span></div>
+        <div class="logic-line"><span class="lk">else</span> (CPU):</div>
+        <div class="logic-line indent">→ <span class="lv">Tesseract</span></div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Format de sortie</span></div>
+      <div class="pipe-codeblock">
+        <div class="pipe-codeblock-bar">stdout → JSON</div>
+        <div class="pipe-codeblock-body"><span class="jb">[</span>
+  <span class="jb">{</span>
+    <span class="jk">"text"</span><span class="jo">:</span>       <span class="js">"こんにちは！"</span><span class="jc">,</span>
+    <span class="jk">"confidence"</span><span class="jo">:</span> <span class="jn">0.94</span><span class="jc">,</span>
+    <span class="jk">"box"</span><span class="jo">:</span>       <span class="jb">[[</span><span class="jn">12</span><span class="jc">,</span><span class="jn">8</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">180</span><span class="jc">,</span><span class="jn">8</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">180</span><span class="jc">,</span><span class="jn">42</span><span class="jb">]</span><span class="jc">,</span><span class="jb">[</span><span class="jn">12</span><span class="jc">,</span><span class="jn">42</span><span class="jb">]]</span>
+  <span class="jb">}</span><span class="jc">,</span>
+  <span class="jcmt">// ... autres blocs</span>
+<span class="jb">]</span></div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Ajout manuel de bulle</span></div>
+      <div class="pipe-text-block">
+        <p>Clic droit sur l'image → <strong>Ajouter une bulle ici</strong>. ToonTrad lance un flood fill depuis le pixel cliqué pour détecter la région blanche (rayon de recherche : 80px), crop l'image, lance l'OCR sur ce crop, puis réintègre les coordonnées dans l'espace image complet.</p>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Fichiers concernés</span></div>
+      <div class="pipe-files">
+        <div class="pipe-file"><span class="pipe-file-tag py">Python</span><code>python/main_ocr.py</code><span class="pipe-file-desc">Point d'entrée QProcess</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag py">Python</span><code>python/ocr_manager.py</code><span class="pipe-file-desc">Multi-engine + GPU/CPU</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag py">Python</span><code>python/ocr_engine.py</code><span class="pipe-file-desc">Détection matériel</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>core/OCRManager.cpp</code><span class="pipe-file-desc">QProcess launcher + parsing JSON</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>core/BubbleDetector.cpp</code><span class="pipe-file-desc">Flood fill + détection point</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pipe-nav-footer">
+    <a href="download.html" class="btn btn-ghost">← Download RAWs</a>
+    <a href="translation.html" class="btn btn-primary">Traduction →</a>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="accent">[</span>ToonTrad<span class="accent">]</span>
+      <span class="footer-copy">· Open Source · 2026 · par <a href="https://github.com/trotroni" target="_blank" class="footer-author">trotroni</a></span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/trotroni/toontrad/tree/dev" target="_blank" rel="noopener" class="footer-link">Branch: dev</a>
+      <a href="https://github.com/trotroni/toontrad/releases" target="_blank" rel="noopener" class="footer-link">Releases</a>
+      <a href="https://github.com/trotroni/toontrad/issues" target="_blank" rel="noopener" class="footer-link">Issues</a>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

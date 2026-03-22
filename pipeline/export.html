@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToonTrad — Étape 06 · Export</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/pipeline.css">
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+
+  <nav class="nav" id="nav">
+    <a href="/toontrad/index.html" class="nav-logo">
+      <!-- Wordmark fond sombre (défaut) -->
+      <svg class="logo-dark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#e63b2e"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="white"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="white"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="#0b0b0b"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="#0b0b0b"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="white">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+      <!-- Wordmark fond clair -->
+      <svg class="logo-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#1a1614"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="#e63b2e"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="#e63b2e"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="white"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="white"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="#1a1614">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+    </a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Changer le thème">
+      <span class="theme-icon" id="themeIcon">☽</span>
+    </button>
+    <div class="pipe-nav-steps" id="pipeNav">
+      <a href="download.html"    class="pipe-nav-step"        data-n="01">Download</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="ocr.html"         class="pipe-nav-step"        data-n="02">OCR</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="translation.html" class="pipe-nav-step"        data-n="03">Traduction</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="validation.html"  class="pipe-nav-step"        data-n="04">Validation</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="typesetting.html" class="pipe-nav-step"        data-n="05">Typesetting</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="export.html"      class="pipe-nav-step active" data-n="06">Export</a>
+    </div>
+    <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="nav-gh">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </nav>
+
+  <div class="pipe-hero">
+    <div class="pipe-hero-bg"><div class="grid-lines"></div><div class="halftone"></div></div>
+    <div class="pipe-hero-content">
+      <div class="pipe-step-badge reveal"><span class="pipe-step-num">06</span><span class="pipe-step-sep">/</span><span class="pipe-step-total">06</span></div>
+      <h1 class="pipe-title reveal">Ex<span class="accent-text">port</span></h1>
+      <p class="pipe-tagline reveal">3 formats de sortie + CI/CD GitHub Actions.</p>
+      <div class="pipe-status-badge reveal done-badge">Fonctionnel</div>
+    </div>
+  </div>
+
+  <div class="pipe-body">
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Formats d'export</span></div>
+      <div class="pipe-features-grid">
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">🖼</div>
+          <div class="pipe-feature-name">PNG rendu</div>
+          <p class="pipe-feature-desc">Image finale avec le texte traduit inséré dans les bulles. Même résolution que l'original. Prête à distribuer.</p>
+        </div>
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">📄</div>
+          <div class="pipe-feature-name">JSON</div>
+          <p class="pipe-feature-desc">Tous les blocs avec coordonnées, textes, statuts, confiance + champs Photoshop (cx, cy, x, y, w, h) pour intégration externe.</p>
+        </div>
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">📝</div>
+          <div class="pipe-feature-name">TXT tabulé</div>
+          <p class="pipe-feature-desc">Format plat : <code>ID | IMG | RAW | TL FR | STATUT | CONF | X | Y | W | H | POLYGONE | TL | NOTE</code>. Compatible tableurs.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Structure JSON exporté</span></div>
+      <div class="pipe-codeblock">
+        <div class="pipe-codeblock-bar">export.json — format v2</div>
+        <div class="pipe-codeblock-body"><span class="jb">{</span>
+  <span class="jk">"image"</span><span class="jo">:</span>   <span class="js">"p001.jpg"</span><span class="jc">,</span>
+  <span class="jk">"version"</span><span class="jo">:</span> <span class="jn">2</span><span class="jc">,</span>
+  <span class="jk">"blocks"</span><span class="jo">:</span> <span class="jb">[</span>
+    <span class="jb">{</span>
+      <span class="jk">"id"</span><span class="jo">:</span>             <span class="jn">1</span><span class="jc">,</span>
+      <span class="jk">"originalText"</span><span class="jo">:</span>   <span class="js">"こんにちは！"</span><span class="jc">,</span>
+      <span class="jk">"translatedText"</span><span class="jo">:</span> <span class="js">"Bonjour !"</span><span class="jc">,</span>
+      <span class="jk">"confidence"</span><span class="jo">:</span>     <span class="jn">0.94</span><span class="jc">,</span>
+      <span class="jk">"boundingBox"</span><span class="jo">:</span>   <span class="jb">{</span><span class="jk">"x"</span><span class="jo">:</span><span class="jn">120</span><span class="jc">,</span><span class="jk">"y"</span><span class="jo">:</span><span class="jn">45</span><span class="jc">,</span><span class="jk">"w"</span><span class="jo">:</span><span class="jn">180</span><span class="jc">,</span><span class="jk">"h"</span><span class="jo">:</span><span class="jn">40</span><span class="jb">}</span><span class="jc">,</span>
+      <span class="jk">"photoshop"</span><span class="jo">:</span>      <span class="jb">{</span><span class="jk">"x"</span><span class="jo">:</span><span class="jn">120</span><span class="jc">,</span><span class="jk">"y"</span><span class="jo">:</span><span class="jn">45</span><span class="jc">,</span><span class="jk">"cx"</span><span class="jo">:</span><span class="jn">210</span><span class="jc">,</span><span class="jk">"cy"</span><span class="jo">:</span><span class="jn">65</span><span class="jb">}</span>
+    <span class="jb">}</span>
+  <span class="jb">]</span>
+<span class="jb">}</span></div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">CI/CD GitHub Actions</span></div>
+      <div class="pipe-text-block">
+        <p>Un workflow GitHub Actions est configuré pour builder, tester et packager ToonTrad automatiquement. Il se déclenche lors de la publication d'un tag versionné (<code>v*.*.*</code>) et crée une GitHub Release avec les binaires en pièce jointe.</p>
+      </div>
+      <div class="pipe-codeblock">
+        <div class="pipe-codeblock-bar">.github/workflows/release.yml</div>
+        <div class="pipe-codeblock-body"><span class="cs-k">on</span>:
+  <span class="cs-k">push</span>:
+    <span class="cs-k">tags</span>: [<span class="cs-s">'v*.*.*'</span>]
+
+<span class="cs-k">jobs</span>:
+  <span class="cs-k">build</span>:
+    <span class="cs-c"># cmake --build → tests → package</span>
+    <span class="cs-c"># → GitHub Release + assets</span></div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Fichiers concernés</span></div>
+      <div class="pipe-files">
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>core/Exporter.cpp</code><span class="pipe-file-desc">exportJSON() · exportTXT() · renderImage()</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>windows/OCR/OCRwindow.cpp</code><span class="pipe-file-desc">Boutons JSON · PNG · TXT</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>CMakeLists.txt</code><span class="pipe-file-desc">Build + copie python/ + resources/</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pipe-nav-footer">
+    <a href="typesetting.html" class="btn btn-ghost">← Typesetting</a>
+    <a href="../index.html" class="btn btn-primary">Retour à l'accueil →</a>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="accent">[</span>ToonTrad<span class="accent">]</span>
+      <span class="footer-copy">· Open Source · 2026 · par <a href="https://github.com/trotroni" target="_blank" class="footer-author">trotroni</a></span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/trotroni/toontrad/tree/dev" target="_blank" rel="noopener" class="footer-link">Branch: dev</a>
+      <a href="https://github.com/trotroni/toontrad/releases" target="_blank" rel="noopener" class="footer-link">Releases</a>
+      <a href="https://github.com/trotroni/toontrad/issues" target="_blank" rel="noopener" class="footer-link">Issues</a>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

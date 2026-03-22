@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToonTrad — Étape 05 · Typesetting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/animations.css">
+  <link rel="stylesheet" href="../css/pipeline.css">
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+
+  <nav class="nav" id="nav">
+    <a href="/toontrad/index.html" class="nav-logo">
+      <!-- Wordmark fond sombre (défaut) -->
+      <svg class="logo-dark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#e63b2e"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="white"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="white"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="#0b0b0b"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="#0b0b0b"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="white">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+      <!-- Wordmark fond clair -->
+      <svg class="logo-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" height="36" role="img" aria-label="ToonTrad">
+        <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#1a1614"/>
+        <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="#e63b2e"/>
+        <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="#e63b2e"/>
+        <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="white"/>
+        <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="white"/>
+        <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+          <tspan x="90" fill="#1a1614">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+        </text>
+      </svg>
+    </a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Changer le thème">
+      <span class="theme-icon" id="themeIcon">☽</span>
+    </button>
+    <div class="pipe-nav-steps" id="pipeNav">
+      <a href="download.html"    class="pipe-nav-step"         data-n="01">Download</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="ocr.html"         class="pipe-nav-step"         data-n="02">OCR</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="translation.html" class="pipe-nav-step"         data-n="03">Traduction</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="validation.html"  class="pipe-nav-step"         data-n="04">Validation</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="typesetting.html" class="pipe-nav-step active"  data-n="05">Typesetting</a>
+      <span class="pipe-nav-sep">→</span>
+      <a href="export.html"      class="pipe-nav-step"         data-n="06">Export</a>
+    </div>
+    <a href="https://github.com/trotroni/toontrad" target="_blank" rel="noopener" class="nav-gh">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </nav>
+
+  <div class="pipe-hero">
+    <div class="pipe-hero-bg"><div class="grid-lines"></div><div class="halftone"></div></div>
+    <div class="pipe-hero-content">
+      <div class="pipe-step-badge reveal"><span class="pipe-step-num">05</span><span class="pipe-step-sep">/</span><span class="pipe-step-total">06</span></div>
+      <h1 class="pipe-title reveal">Type<span class="accent-text">setting</span></h1>
+      <p class="pipe-tagline reveal">Rendu du texte traduit sur l'image source.</p>
+      <div class="pipe-status-badge reveal done-badge">Fonctionnel</div>
+    </div>
+  </div>
+
+  <div class="pipe-body">
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Vue d'ensemble</span></div>
+      <div class="pipe-text-block">
+        <p>Le typesetting est assuré par <code>Exporter::renderImage()</code> via QPainter. Pour chaque bulle validée, le fond original est effacé (remplissage blanc sur le polygone), puis le texte traduit est centré et rendu dans la zone. Le résultat est une image PNG prête à distribuer.</p>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Processus de rendu</span></div>
+      <div class="pipe-features-grid">
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">⬜</div>
+          <div class="pipe-feature-name">Effacement</div>
+          <p class="pipe-feature-desc">Le polygone de chaque bulle est rempli en blanc (QPainter::drawPolygon) pour supprimer le texte original.</p>
+        </div>
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">🔤</div>
+          <div class="pipe-feature-name">Rendu texte</div>
+          <p class="pipe-feature-desc">Le texte traduit est rendu centré (Qt::AlignCenter + Qt::TextWordWrap) dans le bounding box de la bulle.</p>
+        </div>
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">🎨</div>
+          <div class="pipe-feature-name">Police</div>
+          <p class="pipe-feature-desc">Arial Bold 10px par défaut. La personnalisation de la police par projet est prévue dans une future version.</p>
+        </div>
+        <div class="pipe-feature">
+          <div class="pipe-feature-icon">🖼</div>
+          <div class="pipe-feature-name">Format sortie</div>
+          <p class="pipe-feature-desc">QImage ARGB32 → sauvegarde PNG. Même résolution que l'image source, sans perte de qualité.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Implémentation</span></div>
+      <div class="pipe-codeblock">
+        <div class="pipe-codeblock-bar">core/Exporter.cpp — renderImage()</div>
+        <div class="pipe-codeblock-body"><span class="cs-k">for</span> (<span class="cs-k">const auto</span><span class="cs-o">&amp;</span> b : blocks) {
+  <span class="cs-c">// Texte à afficher : traduit ou original</span>
+  <span class="cs-k">const</span> QString<span class="cs-o">&amp;</span> text <span class="cs-o">=</span> b.translatedText.isEmpty()
+    ? b.originalText : b.translatedText;
+
+  <span class="cs-c">// Efface la bulle (fond blanc)</span>
+  p.setBrush(Qt::white);
+  p.setPen(Qt::NoPen);
+  p.drawPolygon(b.polygon);
+
+  <span class="cs-c">// Rend le texte traduit</span>
+  p.setPen(Qt::black);
+  p.drawText(b.boundingBox,
+    Qt::AlignCenter | Qt::TextWordWrap, text);
+}</div>
+      </div>
+    </div>
+
+    <div class="pipe-section reveal">
+      <div class="section-label"><span class="section-num">Fichiers concernés</span></div>
+      <div class="pipe-files">
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>core/Exporter.cpp</code><span class="pipe-file-desc">renderImage() + exportPNG()</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>core/Exporter.h</code><span class="pipe-file-desc">Interface publique</span></div>
+        <div class="pipe-file"><span class="pipe-file-tag cpp">C++</span><code>windows/OCR/OCRwindow.cpp</code><span class="pipe-file-desc">Bouton export PNG</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pipe-nav-footer">
+    <a href="validation.html" class="btn btn-ghost">← Validation</a>
+    <a href="export.html" class="btn btn-primary">Export →</a>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="accent">[</span>ToonTrad<span class="accent">]</span>
+      <span class="footer-copy">· Open Source · 2026 · par <a href="https://github.com/trotroni" target="_blank" class="footer-author">trotroni</a></span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/trotroni/toontrad/tree/dev" target="_blank" rel="noopener" class="footer-link">Branch: dev</a>
+      <a href="https://github.com/trotroni/toontrad/releases" target="_blank" rel="noopener" class="footer-link">Releases</a>
+      <a href="https://github.com/trotroni/toontrad/issues" target="_blank" rel="noopener" class="footer-link">Issues</a>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

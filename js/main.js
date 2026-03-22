@@ -98,35 +98,44 @@ function updateCounter() {
 
 // Fetch repo creation date from GitHub API
 fetch('https://api.github.com/repos/trotroni/toontrad')
-    .then(r => r.json())
-    .then(data => {
-      if (data.created_at) {
-        PROJECT_START = new Date(data.created_at);
-        updateCounter();
-        counterInterval = setInterval(updateCounter, 1000);
-      }
-    })
-    .catch(() => {
-      // Fallback: use repo creation date from last known API response
-      PROJECT_START = new Date('2026-02-27T22:42:53Z');
+  .then(r => r.json())
+  .then(data => {
+    if (data.created_at) {
+      PROJECT_START = new Date(data.created_at);
       updateCounter();
       counterInterval = setInterval(updateCounter, 1000);
-    });
+    }
+  })
+  .catch(() => {
+    // Fallback: use repo creation date from last known API response
+    PROJECT_START = new Date('2026-02-27T22:42:53Z');
+    updateCounter();
+    counterInterval = setInterval(updateCounter, 1000);
+  });
 
-// ── Theme toggle ─────────────────────────
+// ── Theme toggle (dark → grey → light → dark) ──
 const themeToggle = document.getElementById('themeToggle');
+const themeIcon   = document.getElementById('themeIcon');
 const THEME_KEY   = 'toontrad-theme';
+const THEMES      = ['dark', 'grey', 'light'];
+const ICONS       = { dark: '☽', grey: '◑', light: '☀' };
 
-// Restore saved preference
-if (localStorage.getItem(THEME_KEY) === 'light') {
-  document.body.classList.add('light');
-}
+let currentTheme = localStorage.getItem(THEME_KEY) || 'grey';
+applyTheme(currentTheme);
 
 if (themeToggle) {
   themeToggle.addEventListener('click', () => {
-    const isLight = document.body.classList.toggle('light');
-    localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+    const next = THEMES[(THEMES.indexOf(currentTheme) + 1) % THEMES.length];
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
   });
+}
+
+function applyTheme(theme) {
+  document.body.classList.remove('light', 'grey');
+  if (theme !== 'dark') document.body.classList.add(theme);
+  if (themeIcon) themeIcon.textContent = ICONS[theme];
+  currentTheme = theme;
 }
 
 document.querySelectorAll('a[href^="#"]').forEach(a => {
@@ -162,7 +171,7 @@ function buildReleaseCard(release, isLatest) {
   const tagStr = release.tag_name || 'v?';
 
   const assetsHTML = assets.length
-      ? `<div class="release-assets-title">Assets (${assets.length})</div>
+    ? `<div class="release-assets-title">Assets (${assets.length})</div>
        <div class="release-assets">
          ${assets.map(a => `
            <div class="asset-row">
@@ -175,15 +184,15 @@ function buildReleaseCard(release, isLatest) {
              </a>
            </div>`).join('')}
        </div>`
-      : `<div class="release-no-assets">Aucun asset joint à cette release.</div>`;
+    : `<div class="release-no-assets">Aucun asset joint à cette release.</div>`;
 
   const notesHTML = notes
-      ? `<div class="release-notes release-md">${
-          typeof marked !== 'undefined'
-              ? marked.parse(notes, { breaks: true, gfm: true })
-              : notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    ? `<div class="release-notes release-md">${
+        typeof marked !== 'undefined'
+          ? marked.parse(notes, { breaks: true, gfm: true })
+          : notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')
       }</div>`
-      : '';
+    : '';
 
   const card = document.createElement('div');
   card.className = 'release-card' + (isLatest ? ' latest' : '');
@@ -222,27 +231,27 @@ function loadReleases() {
   if (!elList) return;
 
   fetch('https://api.github.com/repos/trotroni/toontrad/releases')
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(releases => {
-        elLoading.style.display = 'none';
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(releases => {
+      elLoading.style.display = 'none';
 
-        if (!releases.length) {
-          elEmpty.style.display = 'block';
-          return;
-        }
+      if (!releases.length) {
+        elEmpty.style.display = 'block';
+        return;
+      }
 
-        elList.style.display = 'block';
-        releases.forEach((release, i) => {
-          elList.appendChild(buildReleaseCard(release, i === 0));
-        });
-      })
-      .catch(() => {
-        elLoading.style.display = 'none';
-        elError.style.display = 'block';
+      elList.style.display = 'block';
+      releases.forEach((release, i) => {
+        elList.appendChild(buildReleaseCard(release, i === 0));
       });
+    })
+    .catch(() => {
+      elLoading.style.display = 'none';
+      elError.style.display = 'block';
+    });
 }
 
 // Lazy load releases when section scrolls into view
@@ -256,3 +265,38 @@ if (releasesSection) {
   }, { threshold: 0.1 });
   relObs.observe(releasesSection);
 }
+
+// ── Last commit ──────────────────────────
+(function () {
+  const el = document.getElementById('lastCommit');
+  if (!el) return;
+
+  fetch('https://api.github.com/repos/trotroni/toontrad/commits/dev')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      const sha     = data.sha.slice(0, 7);
+      const date    = new Date(data.commit.author.date);
+      const ago     = timeAgo(date);
+      const msg     = data.commit.message.split('\n')[0].slice(0, 48);
+      el.innerHTML  =
+        `<a href="${data.html_url}" target="_blank" rel="noopener" class="commit-link">`
+        + `<span class="commit-sha">${sha}</span>`
+        + `<span class="commit-sep">·</span>`
+        + `<span class="commit-msg">${msg}</span>`
+        + `<span class="commit-sep">·</span>`
+        + `<span class="commit-ago">${ago}</span>`
+        + `</a>`;
+    })
+    .catch(() => {
+      el.textContent = 'dev';
+    });
+
+  function timeAgo(date) {
+    const s = Math.floor((Date.now() - date) / 1000);
+    if (s < 60)   return 'à l\'instant';
+    if (s < 3600) return `il y a ${Math.floor(s/60)} min`;
+    if (s < 86400)return `il y a ${Math.floor(s/3600)} h`;
+    const d = Math.floor(s/86400);
+    return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+  }
+})();

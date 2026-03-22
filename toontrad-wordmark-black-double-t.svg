@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" width="340" height="80" role="img" aria-label="ToonTrad wordmark">
+  <title>ToonTrad</title>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue');</style>
+  </defs>
+  <!-- Icon dark on light page -->
+  <polygon points="7,0 72,0 72,65 65,72 0,72 0,7" fill="#1a1614"/>
+  <!-- T red (Toon) -->
+  <rect x="8"  y="10" width="26" height="7"  rx="0.5" fill="#e63b2e"/>
+  <rect x="17" y="17" width="9"  height="28" rx="0.5" fill="#e63b2e"/>
+  <!-- T white (Trad) -->
+  <rect x="30" y="21" width="35" height="7"  rx="0.5" fill="white"/>
+  <rect x="43" y="28" width="9"  height="36" rx="0.5" fill="white"/>
+  <!-- Wordmark text -->
+  <text font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif" font-size="58" letter-spacing="2" y="62">
+    <tspan x="90"  fill="#1a1614">TOON</tspan><tspan fill="#e63b2e">TRAD</tspan>
+  </text>
+</svg>
