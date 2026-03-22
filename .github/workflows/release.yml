@@ -5,31 +5,32 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Version tag (v0.0.0-test) — utilisé si lancé manuellement'
+        required: false
+        default: 'v0.0.0-test'
 
 permissions:
   contents: write
 
-#  Variables substituées dans RELEASE_TEMPLATE :
-#  {TAG}     → v2.1.0 (le tag git complet)
-#  {VERSION} → 2.1.0  (sans le v)
-#  {DATE}    → 2026-03-22
-
 env:
-  RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE_1.md
+  RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE.md
+  CHANGELOG_FILE:   .github/CHANGELOG_NEXT.md
 
 jobs:
 
   # ═══════════════════════════════════════════════════════════════════════════
-  #  macOS → ToonTrad-X.Y.Z-Darwin.dmg
+  #  macOS Intel (x86_64)
   # ═══════════════════════════════════════════════════════════════════════════
-  build-macos:
-    runs-on: macos-latest
+  build-macos-intel:
+    runs-on: macos-13
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Installer Qt6
+      - name: Installer Qt6 (Intel)
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.7.3'
@@ -38,32 +39,151 @@ jobs:
           arch: 'clang_64'
           cache: true
 
-      - name: Installer Python + dépendances
+      - name: Installer dépendances Python
         run: |
           python3 -m pip install --upgrade pip
+          pip3 install cairosvg Pillow --quiet
           pip3 install -r requirements.txt --quiet || true
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
       - name: Build
         run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
 
-      - name: macdeployqt (bundle Qt dans le .app)
+      - name: macdeployqt
         run: |
-          "$Qt6_DIR/bin/macdeployqt" "build/ToonTrad.app" -verbose=1
+          "$Qt6_DIR/bin/macdeployqt" "build/ToonTrad.app" -always-overwrite
 
-      - name: Générer le DMG (CPack DragNDrop)
-        run: cd build && cpack -G DragNDrop -V
+      - name: Créer le DMG
+        run: |
+          APP="build/ToonTrad.app"
+          DMG="ToonTrad-macOS-Intel.dmg"
+          TMP="/tmp/tt_intel.dmg"
 
-      - name: Upload artifact macOS
+          hdiutil create -size 300m -fs HFS+ -volname "ToonTrad" "$TMP" -ov -quiet
+          hdiutil attach "$TMP" -mountpoint /Volumes/ToonTrad -quiet
+          cp -r "$APP" /Volumes/ToonTrad/
+          ln -s /Applications /Volumes/ToonTrad/Applications
+
+          osascript <<'EOF'
+          tell application "Finder"
+            tell disk "ToonTrad"
+              open
+              delay 3
+              tell container window
+                set current view to icon view
+                set toolbar visible to false
+                set statusbar visible to false
+                set the bounds to {200, 150, 780, 520}
+                tell icon view options of container window
+                  set arrangement to not arranged
+                  set icon size to 128
+                end tell
+                set position of item "ToonTrad.app" to {170, 180}
+                set position of item "Applications"  to {430, 180}
+                close
+                open
+                delay 1
+                close
+              end tell
+            end tell
+          end tell
+          EOF
+
+          hdiutil detach /Volumes/ToonTrad -quiet
+          hdiutil convert "$TMP" -format UDZO -o "$DMG" -ov -quiet
+          rm "$TMP"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ToonTrad-macOS
-          path: build/*.dmg
+          name: ToonTrad-macOS-Intel
+          path: ToonTrad-macOS-Intel.dmg
 
   # ═══════════════════════════════════════════════════════════════════════════
-  #  Windows → ToonTrad-X.Y.Z-win64.exe
+  #  macOS Apple Silicon (arm64)
+  # ═══════════════════════════════════════════════════════════════════════════
+  build-macos-arm:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer Qt6 (Apple Silicon)
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.7.3'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          cache: true
+
+      - name: Installer dépendances Python
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install cairosvg Pillow --quiet
+          pip3 install -r requirements.txt --quiet || true
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
+
+      - name: Build
+        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: macdeployqt
+        run: |
+          "$Qt6_DIR/bin/macdeployqt" "build/ToonTrad.app" -always-overwrite
+
+      - name: Créer le DMG
+        run: |
+          APP="build/ToonTrad.app"
+          DMG="ToonTrad-macOS-AppleSilicon.dmg"
+          TMP="/tmp/tt_arm.dmg"
+
+          hdiutil create -size 300m -fs HFS+ -volname "ToonTrad" "$TMP" -ov -quiet
+          hdiutil attach "$TMP" -mountpoint /Volumes/ToonTrad -quiet
+          cp -r "$APP" /Volumes/ToonTrad/
+          ln -s /Applications /Volumes/ToonTrad/Applications
+
+          osascript <<'EOF'
+          tell application "Finder"
+            tell disk "ToonTrad"
+              open
+              delay 3
+              tell container window
+                set current view to icon view
+                set toolbar visible to false
+                set statusbar visible to false
+                set the bounds to {200, 150, 780, 520}
+                tell icon view options of container window
+                  set arrangement to not arranged
+                  set icon size to 128
+                end tell
+                set position of item "ToonTrad.app" to {170, 180}
+                set position of item "Applications"  to {430, 180}
+                close
+                open
+                delay 1
+                close
+              end tell
+            end tell
+          end tell
+          EOF
+
+          hdiutil detach /Volumes/ToonTrad -quiet
+          hdiutil convert "$TMP" -format UDZO -o "$DMG" -ov -quiet
+          rm "$TMP"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToonTrad-macOS-AppleSilicon
+          path: ToonTrad-macOS-AppleSilicon.dmg
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  #  Windows x64
   # ═══════════════════════════════════════════════════════════════════════════
   build-windows:
     runs-on: windows-latest
@@ -84,79 +204,176 @@ jobs:
       - name: Installer NSIS
         run: choco install nsis --yes --no-progress
 
-      - name: Installer Python + dépendances
-        run: pip install -r requirements.txt --quiet
+      - name: Installer dépendances Python
+        run: |
+          pip install cairosvg Pillow --quiet
+          pip install -r requirements.txt --quiet
         continue-on-error: true
 
-      - name: Configure CMake (MSVC x64)
+      - name: Configure CMake
         run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release
 
-      - name: cmake install → staging
-        shell: pwsh
-        run: cmake --install build --config Release --prefix build/staging
-
-      - name: windeployqt (bundle DLLs Qt)
+      - name: windeployqt + staging
         shell: pwsh
         run: |
+          # Cherche l'exe dans les emplacements possibles selon le générateur
+          $exe = "build\Release\ToonTrad.exe"
+          if (!(Test-Path $exe)) { $exe = "build\ToonTrad.exe" }
+
+          New-Item -ItemType Directory -Force -Path "build\staging" | Out-Null
+          Copy-Item $exe "build\staging\" -Force
+
           & "$env:Qt6_DIR\bin\windeployqt.exe" "build\staging\ToonTrad.exe" `
             --release --no-translations --no-system-d3d-compiler
 
-      - name: Générer l'installateur NSIS (CPack)
-        shell: pwsh
-        run: cd build && cpack -G NSIS -V
+          Copy-Item "python"    "build\staging\python"    -Recurse -Force
+          Copy-Item "resources" "build\staging\resources" -Recurse -Force
 
-      - name: Upload artifact Windows
+      - name: Générer installateur NSIS
+        shell: pwsh
+        run: |
+          cd build
+          cpack -G NSIS -V
+          # Renomme en nom prévisible pour l'upload
+          Get-ChildItem *.exe | Rename-Item -NewName "ToonTrad-Windows-x64.exe"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ToonTrad-Windows
-          path: build\*.exe
+          path: build\ToonTrad-Windows-x64.exe
 
   # ═══════════════════════════════════════════════════════════════════════════
-  #  Draft Release
+  #  Draft Release — assemble template + changelog
   # ═══════════════════════════════════════════════════════════════════════════
   draft-release:
-    needs: [build-macos, build-windows]
+    needs: [build-macos-intel, build-macos-arm, build-windows]
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (pour lire le template)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Télécharger artifact macOS
+      - name: Télécharger tous les artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ToonTrad-macOS
           path: artifacts/
+          merge-multiple: true
 
-      - name: Télécharger artifact Windows
-        uses: actions/download-artifact@v4
-        with:
-          name: ToonTrad-Windows
-          path: artifacts/
+      - name: Lister les artifacts
+        run: find artifacts/ -type f
 
-      - name: Préparer les release notes depuis le template
-        env:
-          TEMPLATE: ${{ env.RELEASE_TEMPLATE }}
+      # ── Résolution de la version ──────────────────────────────────────────
+      - name: Résoudre la version
+        id: version
         run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION_CLEAN="${VERSION#v}"
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="${{ github.event.inputs.version_override }}"
+          fi
+          VERSION="${TAG#v}"
           DATE=$(date +%Y-%m-%d)
-          sed \
-            -e "s/{TAG}/${VERSION}/g" \
-            -e "s/{VERSION}/${VERSION_CLEAN}/g" \
-            -e "s/{DATE}/${DATE}/g" \
-            "$TEMPLATE" > /tmp/release_notes.md
-          echo "--- Aperçu des notes ---"
-          cat /tmp/release_notes.md
+          echo "tag=$TAG"         >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "date=$DATE"       >> $GITHUB_OUTPUT
+          echo "Résolu → tag=$TAG | version=$VERSION | date=$DATE"
 
+      # ── Vérifications ────────────────────────────────────────────────────
+      - name: Vérifier les fichiers requis
+        run: |
+          missing=0
+          for f in "${{ env.RELEASE_TEMPLATE }}" "${{ env.CHANGELOG_FILE }}"; do
+            if [ ! -f "$f" ]; then
+              echo "ERREUR : fichier introuvable → $f"
+              missing=1
+            else
+              echo "OK : $f"
+            fi
+          done
+          [ $missing -eq 0 ] || exit 1
+
+      # ── Assemblage des release notes ──────────────────────────────────────
+      # Stratégie : on remplace le bloc entre les deux "---" qui encadrent
+      # les sections Nouveautés/Bugs/Améliorations par le contenu de
+      # CHANGELOG_NEXT.md, puis on substitue {TAG}, {VERSION}, {DATE}.
+      - name: Assembler les release notes
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE="${{ steps.version.outputs.date }}"
+
+          TEMPLATE="${{ env.RELEASE_TEMPLATE }}"
+          CHANGELOG="${{ env.CHANGELOG_FILE }}"
+
+          # Le template contient un bloc délimité par des lignes "---"
+          # exactement comme suit :
+          #   (ligne) ---
+          #   ## Nouveautés ... ## Améliorations ... -
+          #   (ligne) ---
+          # On extrait tout avant le 1er "---" (header),
+          # tout après le 2ème "---" (footer),
+          # et on insère le changelog entre les deux.
+
+          python3 - <<'PYEOF'
+          import sys, re, os
+
+          template_path  = os.environ["TEMPLATE"]
+          changelog_path = os.environ["CHANGELOG"]
+          tag     = os.environ["TAG"]
+          version = os.environ["VERSION"]
+          date    = os.environ["DATE"]
+
+          with open(template_path,  encoding="utf-8") as f:
+              template = f.read()
+          with open(changelog_path, encoding="utf-8") as f:
+              changelog = f.read().strip()
+
+          # Trouve les deux séparateurs "---" qui encadrent le bloc placeholder
+          # (on cherche "\n---\n" pour ne pas matcher les tirets de tableaux)
+          parts = re.split(r'\n---\n', template)
+
+          if len(parts) < 3:
+              # Fallback : insertion simple si la structure est inattendue
+              result = template.replace(
+                  "<!-- Décris ici les nouvelles fonctionnalités -->\n- \n\n## Corrections de bugs\n\n<!-- Liste les bugs corrigés -->\n- \n\n## Améliorations\n\n<!-- Améliorations de performance, UX, etc. -->\n- ",
+                  changelog
+              )
+          else:
+              # parts[0] = header (# ToonTrad ... > Brouillon...)
+              # parts[1] = bloc placeholder (Nouveautés / Bugs / Améliorations)
+              # parts[2..] = footer (Installation, Prérequis, etc.)
+              footer = "\n---\n".join(parts[2:])
+              result = parts[0] + "\n---\n" + changelog + "\n\n---\n" + footer
+
+          # Substitution des variables
+          result = result.replace("{TAG}",     tag)
+          result = result.replace("{VERSION}", version)
+          result = result.replace("{DATE}",    date)
+
+          with open("/tmp/release_notes.md", "w", encoding="utf-8") as f:
+              f.write(result)
+
+          print("=== Aperçu release notes ===")
+          print(result[:800])
+          PYEOF
+        env:
+          TEMPLATE:   ${{ env.RELEASE_TEMPLATE }}
+          CHANGELOG:  ${{ env.CHANGELOG_FILE }}
+          TAG:        ${{ steps.version.outputs.tag }}
+          VERSION:    ${{ steps.version.outputs.version }}
+          DATE:       ${{ steps.version.outputs.date }}
+
+      # ── Création de la draft release ──────────────────────────────────────
       - name: Créer la draft release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: "ToonTrad ${{ github.ref_name }}"
+          tag_name:  ${{ steps.version.outputs.tag }}
+          name:      "ToonTrad ${{ steps.version.outputs.tag }}"
           body_path: /tmp/release_notes.md
           files: |
             artifacts/*.dmg
