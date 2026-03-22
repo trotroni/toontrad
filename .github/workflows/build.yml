@@ -189,6 +189,10 @@ jobs:
       - name: Résoudre la version
         id: version
         run: |
+          echo "ref_type  = ${{ github.ref_type }}"
+          echo "ref_name  = ${{ github.ref_name }}"
+          echo "event     = ${{ github.event_name }}"
+          
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             TAG="${{ github.ref_name }}"
           elif [[ -n "${{ github.event.inputs.version_override }}" ]]; then
@@ -196,6 +200,7 @@ jobs:
           else
             TAG="${{ env.MANUAL_VERSION }}"
           fi
+          
           VERSION="${TAG#v}"
           DATE=$(date +%Y-%m-%d)
           echo "tag=$TAG"         >> $GITHUB_OUTPUT

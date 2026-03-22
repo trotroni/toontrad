@@ -50,7 +50,6 @@ set(SOURCES
         core/BubbleDetector.cpp
         core/OCRManager.cpp
         core/Exporter.cpp
-        core/Translator.cpp
         core/ProjectManager.cpp
 
         gui/canvas/ImageCanvas.cpp
@@ -70,7 +69,6 @@ set(HEADERS
         core/OCRManager.h
         core/OCRConfig.h
         core/Exporter.h
-        core/Translator.h
         core/ProjectManager.h
         core/models.h
 

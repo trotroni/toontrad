@@ -27,21 +27,28 @@ signals:
     void blockUpdated(int id, const QString& trad,
                       const QString& status, const QString& notes);
     void blockSelected(int id);
-
-    // Émis quand l'ordre des blocs change par drag
     void blocksReordered(const QList<int>& newIdOrder);
 
 private slots:
-    void onRowsMoved();
+    void onRowsMoved(const QModelIndex& parent,
+                     int start, int end,
+                     const QModelIndex& destination,
+                     int row);
 
 private:
-    Ui::TextWindow*     ui;
-    QListWidget*        m_list = nullptr;
-    QMap<int, QWidget*> m_panels;
+    Ui::TextWindow* ui;
+    QListWidget*    m_list   = nullptr;
+
+    // Stocke les données brutes pour reconstruire les widgets après drag
+    QMap<int, TextBlock> m_blockData;
+    // Ordre courant des IDs (reflète l'ordre visuel)
+    QList<int>           m_order;
 
     void clearPanels();
+    void buildWidget(int bid);
+    void rebuildAllWidgets();
+
     bool eventFilter(QObject* obj, QEvent* event) override;
-    void addBubbleItem(const TextBlock& block);
 };
 
 #endif // TEXTWINDOW_H
