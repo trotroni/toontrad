@@ -1,25 +1,29 @@
 #include <QApplication>
-#include <QIcon>
 #include "config.h"
+#include "core/ProjectManager.h"
 #include "windows/main/MainWindow.h"
-
-#include <QDebug>
-#include <QtGlobal>
-
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     app.setApplicationName("ToonTrad");
     app.setOrganizationName("ToonTrad");
-    app.setWindowIcon(QIcon(":/resources/toontrad-icon-red-double-t.svg"));
+    app.setApplicationVersion(Config::VERSION_STR);
 
     Config::load();
+    ProjectManager::instance().load();
 
-    MainWindow window;
+    // argv[1] peut être un chemin vers un .ttproject
+    // (double-clic depuis l'Explorateur Windows ou le Finder hors bundle).
+    // Sur macOS avec bundle, QFileOpenEvent prend le relais dans MainWindow::event().
+    QString openPath;
+    if (argc > 1)
+        openPath = QString::fromLocal8Bit(argv[1]);
+
+    MainWindow window(openPath);
     window.show();
 
-    qDebug() << QT_VERSION_STR;
+    //qDebug() << QT_VERSION_STR;
 
     return app.exec();
 }

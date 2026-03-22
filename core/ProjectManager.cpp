@@ -13,6 +13,7 @@ const QStringList Project::IMAGE_EXTENSIONS = {
     "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp", "*.tiff", "*.tif"
 };
 
+
 QString Project::absolutePath(const ImagePage& page) const
 {
     return QDir(rootPath).absoluteFilePath(page.relativePath);
@@ -27,14 +28,8 @@ ImagePage* Project::findPage(const QString& relativePath)
 
 void Project::scanImages()
 {
-    // Scanne uniquement raw/ — dossier dédié aux images du projet
-    QString spritesPath = QDir(rootPath).filePath("raw");
-    QDir spritesDir(spritesPath);
-
-    if (!spritesDir.exists()) {
-        qDebug() << "Project::scanImages: raw/ introuvable dans" << rootPath;
-        return;
-    }
+    QDir root(rootPath);
+    if (!root.exists()) return;
 
     QMap<QString, ImagePage> existing;
     for (const auto& p : pages)
@@ -42,12 +37,12 @@ void Project::scanImages()
 
     pages.clear();
 
-    QDirIterator it(spritesPath, IMAGE_EXTENSIONS,
+    QDirIterator it(rootPath, IMAGE_EXTENSIONS,
                     QDir::Files, QDirIterator::Subdirectories);
     QStringList found;
     while (it.hasNext()) {
         it.next();
-        found << QDir(rootPath).relativeFilePath(it.filePath());
+        found << root.relativeFilePath(it.filePath());
     }
     found.sort();
 
@@ -61,14 +56,27 @@ void Project::scanImages()
         }
     }
 
-    qDebug() << "Project::scanImages:" << pages.size()
-             << "images dans" << spritesPath;
+    qDebug() << "Project::scanImages:" << pages.size() << "images dans" << rootPath;
 }
+
 
 bool Project::load()
 {
-    QString jsonPath = QDir(rootPath).filePath("project.json");
-    QFile file(jsonPath);
+    QDir dir(rootPath);
+
+    // ── Migration automatique project.json → project.ttproject ───────────────
+    QString newPath    = dir.filePath(TTPROJECT_FILENAME);
+    QString legacyPath = dir.filePath(TTPROJECT_LEGACY);
+
+    if (!QFile::exists(newPath) && QFile::exists(legacyPath)) {
+        if (QFile::rename(legacyPath, newPath))
+            qDebug() << "Migration:" << legacyPath << "→" << newPath;
+        else
+            qWarning() << "Migration échouée :" << legacyPath;
+    }
+
+    // ── Lecture du fichier projet ─────────────────────────────────────────────
+    QFile file(newPath);
     if (!file.exists()) {
         scanImages();
         return true;
@@ -96,6 +104,7 @@ bool Project::load()
     return true;
 }
 
+
 bool Project::save() const
 {
     QDir dir(rootPath);
@@ -110,21 +119,25 @@ bool Project::save() const
         QJsonObject po;
         po["file"]    = page.relativePath;
         po["ocrDone"] = page.ocrDone;
+
         QJsonArray blocks;
         for (const auto& b : page.blocks)
             blocks.append(b.toJson());
         po["blocks"] = blocks;
+
         pagesArr.append(po);
     }
     root["pages"] = pagesArr;
 
-    QFile file(dir.filePath("project.json"));
+    QFile file(dir.filePath(TTPROJECT_FILENAME));
     if (!file.open(QIODevice::WriteOnly)) return false;
     file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
     file.close();
-    qDebug() << "Project::save →" << dir.filePath("project.json");
+
+    qDebug() << "Project::save →" << dir.filePath(TTPROJECT_FILENAME);
     return true;
 }
+
 
 ProjectManager& ProjectManager::instance()
 {

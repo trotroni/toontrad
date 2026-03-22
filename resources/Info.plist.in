@@ -4,26 +4,83 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ToonTrad</string>
+    <string>@MACOSX_BUNDLE_BUNDLE_NAME@</string>
     <key>CFBundleDisplayName</key>
     <string>ToonTrad</string>
     <key>CFBundleIdentifier</key>
-    <string>com.toontrad.app</string>
+    <string>@MACOSX_BUNDLE_GUI_IDENTIFIER@</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>@MACOSX_BUNDLE_BUNDLE_VERSION@</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>@MACOSX_BUNDLE_SHORT_VERSION_STRING@</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleExecutable</key>
     <string>ToonTrad</string>
+
+    <!-- Icône de l'application -->
+    <key>CFBundleIconFile</key>
+    <string>ToonTrad</string>
+
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>11.0</string>
+
+    <!-- ── Association du type de fichier .ttproject ──────────────────────── -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <!-- Icône affichée dans le Finder pour les fichiers .ttproject -->
+            <key>CFBundleTypeIconFile</key>
+            <string>ttproject</string>
+
+            <key>CFBundleTypeName</key>
+            <string>ToonTrad Project</string>
+
+            <!-- Rôle Editor : on peut lire ET écrire ce type de fichier -->
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+
+            <!-- On est le seul propriétaire de ce type -->
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>ttproject</string>
+            </array>
+
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.toontrad.ttproject</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- ── Déclaration du type UTI pour .ttproject ────────────────────────── -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.toontrad.ttproject</string>
+            <key>UTTypeDescription</key>
+            <string>ToonTrad Project</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.json</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>ttproject</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
 </dict>
 </plist>

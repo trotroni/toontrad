@@ -7,12 +7,20 @@
 #include <vector>
 #include "TextBlock.h"
 
+// Extension officielle des fichiers projet ToonTrad
+inline constexpr const char* TTPROJECT_EXT      = "ttproject";
+inline constexpr const char* TTPROJECT_FILENAME  = "project.ttproject";
+// Ancien nom — utilisé uniquement pour la migration automatique
+inline constexpr const char* TTPROJECT_LEGACY    = "project.json";
+
+
 struct ImagePage
 {
     QString relativePath;
     bool    ocrDone = false;
     std::vector<TextBlock> blocks;
 };
+
 
 class Project
 {
@@ -22,6 +30,7 @@ public:
     QList<ImagePage> pages;
 
     void scanImages();
+
     bool load();
     bool save() const;
 
@@ -31,6 +40,7 @@ public:
 private:
     static const QStringList IMAGE_EXTENSIONS;
 };
+
 
 class ProjectManager
 {

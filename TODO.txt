@@ -1,0 +1,6 @@
+Changer les json des projet en .ttproject ou .ttp si aucun autre logitiel ne les utilise et fais en sorte qu’il est le logo de toontrad et que quand on double clic ça ouvre le logitiel sur le bon projet
+
+genere les logo des app et des app lancer
+
+faire en sorte d’avoir dans le build toute les dependance sans que l’utilisateur n’est rien a faire (il me semble qu’il y a un commentaire qui demande a mettre ressource et pyhton dans le repaertoire je n’en veux pas)
+Je veux aussi que le logitiel s’installe dans les programme dans windows et lance un lancheur d’installation pour mac
