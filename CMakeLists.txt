@@ -1,262 +1,183 @@
 cmake_minimum_required(VERSION 3.16)
-project(ToonTrad VERSION 1.0 LANGUAGES CXX)
+project(ToonTrad VERSION 2.0.0-beta LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network Svg)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
-# ── Python ────────────────────────────────────────────────────────────────────
+# ── Sources ───────────────────────────────────────────────────────────────────
+set(SOURCES
+        main.cpp
+        config.cpp
+
+        core/TextBlock.cpp
+        core/BubbleDetector.cpp
+        core/OCRManager.cpp
+        core/Exporter.cpp
+        core/Translator.cpp
+        core/ProjectManager.cpp
+
+        gui/canvas/ImageCanvas.cpp
+
+        windows/main/mainwindow.cpp
+        windows/OCR/OCRwindow.cpp
+        windows/settings/SettingsWindow.cpp
+)
+
+set(HEADERS
+        config.h
+
+        core/TextBlock.h
+        core/BubbleDetector.h
+        core/OCRManager.h
+        core/OCRConfig.h
+        core/Exporter.h
+        core/Translator.h
+        core/ProjectManager.h
+        core/models.h
+
+        gui/canvas/ImageCanvas.h
+
+        windows/main/mainwindow.h
+        windows/OCR/OCRwindow.h
+        windows/settings/SettingsWindow.h
+)
+
+set(UIS
+        windows/main/mainwindow.ui
+        windows/OCR/OCRwindow.ui
+        windows/settings/SettingsWindow.ui
+)
+
+# ── macOS : bundle .app ───────────────────────────────────────────────────────
+if(APPLE)
+    set(MACOSX_BUNDLE_PROPERTIES
+        MACOSX_BUNDLE                    TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME        "ToonTrad"
+        MACOSX_BUNDLE_GUI_IDENTIFIER     "com.toontrad.app"
+        MACOSX_BUNDLE_BUNDLE_VERSION     "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    )
+endif()
+
+qt_add_executable(ToonTrad
+        ${SOURCES}
+        ${HEADERS}
+        ${UIS}
+)
+
+if(APPLE)
+    set_target_properties(ToonTrad PROPERTIES ${MACOSX_BUNDLE_PROPERTIES})
+endif()
+
+target_link_libraries(ToonTrad PRIVATE Qt6::Widgets Qt6::Network)
+target_include_directories(ToonTrad PRIVATE ${CMAKE_SOURCE_DIR})
+
+# ── Détection de Python ───────────────────────────────────────────────────────
 find_program(PYTHON_EXEC NAMES python3 python REQUIRED)
 message(STATUS "Python trouvé : ${PYTHON_EXEC}")
 
-# ── 1. Génération automatique des icônes depuis le SVG ────────────────────────
-set(SVG_ICON     "${CMAKE_SOURCE_DIR}/resources/toontrad-icon-red-double-t.svg")
-set(ICO_ICON     "${CMAKE_SOURCE_DIR}/resources/ToonTrad.ico")
-set(ICNS_ICON    "${CMAKE_SOURCE_DIR}/resources/ToonTrad.icns")
-set(ICNS_PROJECT "${CMAKE_SOURCE_DIR}/resources/ttproject.icns")
-
-add_custom_command(
-    OUTPUT "${ICO_ICON}" "${ICNS_ICON}" "${ICNS_PROJECT}"
-    COMMAND ${PYTHON_EXEC}
-        "${CMAKE_SOURCE_DIR}/scripts/generate_icons.py"
-        "${SVG_ICON}"
-        "${ICO_ICON}"
-        "${ICNS_ICON}"
-        "${ICNS_PROJECT}"
-    DEPENDS "${SVG_ICON}" "${CMAKE_SOURCE_DIR}/scripts/generate_icons.py"
-    COMMENT "Génération des icônes .ico / .icns depuis le SVG..."
-)
-add_custom_target(generate_icons
-    DEPENDS "${ICO_ICON}" "${ICNS_ICON}" "${ICNS_PROJECT}"
-)
-
-# ── 2. Téléchargement tessdata ────────────────────────────────────────────────
+# ── Téléchargement automatique de tessdata au build ───────────────────────────
 set(TESSDATA_DIR "${CMAKE_SOURCE_DIR}/resources/tessdata")
 add_custom_target(download_tessdata ALL
-    COMMAND ${PYTHON_EXEC}
+        COMMAND ${PYTHON_EXEC}
         "${CMAKE_SOURCE_DIR}/scripts/download_tessdata.py"
         "${TESSDATA_DIR}"
-    COMMENT "Vérification/téléchargement des modèles Tesseract..."
-    VERBATIM
+        COMMENT "Vérification/téléchargement des modèles Tesseract (tessdata)..."
+        VERBATIM
 )
+add_dependencies(ToonTrad download_tessdata)
 
-# ── 3. Sources ────────────────────────────────────────────────────────────────
-set(SOURCES
-    main.cpp
-    config.h
-    config.cpp
-
-    core/TextBlock.h
-    core/TextBlock.cpp
-    core/OCRConfig.h
-    core/models.h
-    core/OCRManager.h
-    core/OCRManager.cpp
-    core/BubbleDetector.h
-    core/BubbleDetector.cpp
-    core/Exporter.h
-    core/Exporter.cpp
-    core/ProjectManager.h
-    core/ProjectManager.cpp
-
-    gui/canvas/ImageCanvas.h
-    gui/canvas/ImageCanvas.cpp
-
-    windows/main/MainWindow.h
-    windows/main/MainWindow.cpp
-    windows/main/MainWindow.ui
-
-    windows/image/ImageWindow.h
-    windows/image/ImageWindow.cpp
-    windows/image/ImageWindow.ui
-
-    windows/text/TextWindow.h
-    windows/text/TextWindow.cpp
-    windows/text/TextWindow.ui
-
-    windows/settings/SettingsWindow.h
-    windows/settings/SettingsWindow.cpp
-    windows/settings/SettingsWindow.ui
-
-    windows/project/NewProjectDialog.h
-    windows/project/NewProjectDialog.cpp
-    windows/project/NewProjectDialog.ui
-
-    resources.qrc
-)
-
-# ── 4. Icônes selon la plateforme ─────────────────────────────────────────────
-set(APP_ICON_SOURCES "")
-
-if(APPLE)
-    foreach(_icns "${ICNS_ICON}" "${ICNS_PROJECT}")
-        if(EXISTS "${_icns}")
-            list(APPEND APP_ICON_SOURCES "${_icns}")
-            set_source_files_properties("${_icns}" PROPERTIES
-                MACOSX_PACKAGE_LOCATION "Resources")
-        endif()
-    endforeach()
-endif()
-
-if(WIN32)
-    if(EXISTS "${ICO_ICON}")
-        set(RC_FILE "${CMAKE_BINARY_DIR}/app_icon.rc")
-        file(WRITE "${RC_FILE}" "IDI_ICON1 ICON \"${ICO_ICON}\"\n")
-        list(APPEND APP_ICON_SOURCES "${RC_FILE}")
-    else()
-        message(STATUS "ToonTrad.ico pas encore généré — sera créé au 1er build")
-    endif()
-endif()
-
-# ── 5. Exécutable ─────────────────────────────────────────────────────────────
-qt_add_executable(ToonTrad
-    ${SOURCES}
-    ${APP_ICON_SOURCES}
-)
-add_dependencies(ToonTrad generate_icons download_tessdata)
-
-# ── 6. Bundle macOS ───────────────────────────────────────────────────────────
-if(APPLE)
-    set_target_properties(ToonTrad PROPERTIES
-        MACOSX_BUNDLE                      TRUE
-        MACOSX_BUNDLE_BUNDLE_NAME          "ToonTrad"
-        MACOSX_BUNDLE_BUNDLE_VERSION       "1.0.0"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
-        MACOSX_BUNDLE_GUI_IDENTIFIER       "com.toontrad.app"
-        MACOSX_BUNDLE_ICON_FILE            "ToonTrad"
-        MACOSX_BUNDLE_INFO_PLIST           "${CMAKE_SOURCE_DIR}/resources/Info.plist.in"
-    )
-endif()
-
-target_link_libraries(ToonTrad PRIVATE Qt6::Widgets Qt6::Network Qt6::Svg)
-target_include_directories(ToonTrad PRIVATE ${CMAKE_SOURCE_DIR})
-
-# ── 7. Post-build : copie des dépendances ─────────────────────────────────────
-if(APPLE)
-    set(BUNDLE_CONTENTS "$<TARGET_BUNDLE_CONTENT_DIR:ToonTrad>")
-
-    add_custom_command(TARGET ToonTrad POST_BUILD
+# ── Copie python/ à côté de l'exécutable (build local) ───────────────────────
+add_custom_command(TARGET ToonTrad POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/python" "${BUNDLE_CONTENTS}/python"
+        "${CMAKE_SOURCE_DIR}/python"
+        "$<TARGET_FILE_DIR:ToonTrad>/python"
+        COMMENT "Copie python/ dans le répertoire de build"
+)
+
+add_custom_command(TARGET ToonTrad POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_SOURCE_DIR}/resources" "${BUNDLE_CONTENTS}/resources"
-    )
+        "${CMAKE_SOURCE_DIR}/resources"
+        "$<TARGET_FILE_DIR:ToonTrad>/resources"
+        COMMENT "Copie resources/tessdata dans le répertoire de build"
+)
 
-    find_program(MACDEPLOYQT macdeployqt HINTS "${Qt6_DIR}/../../../bin")
-    if(MACDEPLOYQT)
-        add_custom_command(TARGET ToonTrad POST_BUILD
-            COMMAND ${MACDEPLOYQT}
-                "$<TARGET_BUNDLE_DIR:ToonTrad>"
-                -always-overwrite
-            COMMENT "macdeployqt — intègre Qt dans le bundle"
-        )
-    else()
-        message(WARNING "macdeployqt introuvable")
-    endif()
+# ═════════════════════════════════════════════════════════════════════════════
+#  INSTALL — règles utilisées par CPack pour construire les installateurs
+# ═════════════════════════════════════════════════════════════════════════════
 
-else()
-    # ── Windows / Linux ───────────────────────────────────────────────────────
-    set(STAGING "${CMAKE_BINARY_DIR}/staging")
-
-    if(WIN32)
-        find_program(WINDEPLOYQT windeployqt HINTS "${Qt6_DIR}/../../../bin")
-    endif()
-
-    if(WIN32 AND WINDEPLOYQT)
-        add_custom_command(TARGET ToonTrad POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${STAGING}/bin"
-            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:ToonTrad>" "${STAGING}/bin/"
-            COMMAND ${WINDEPLOYQT}
-                --no-translations
-                --no-system-d3d-compiler
-                --dir "${STAGING}/bin"
-                "$<TARGET_FILE:ToonTrad>"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/python" "${STAGING}/python"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/resources" "${STAGING}/resources"
-            COMMENT "windeployqt + copie dépendances dans staging/"
-        )
-    else()
-        add_custom_command(TARGET ToonTrad POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory "${STAGING}/bin"
-            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:ToonTrad>" "${STAGING}/bin/"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/python" "${STAGING}/python"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/resources" "${STAGING}/resources"
-        )
-    endif()
-endif()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# CPack — Installeur final
-# ══════════════════════════════════════════════════════════════════════════════
-include(InstallRequiredSystemLibraries)
-
-set(CPACK_PACKAGE_NAME          "ToonTrad")
-set(CPACK_PACKAGE_VENDOR        "ToonTrad")
-set(CPACK_PACKAGE_VERSION       "1.0.0")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Outil de scantrad manga/webtoon")
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/LICENSE")
-    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-endif()
-
-# ── macOS : DMG drag-and-drop ─────────────────────────────────────────────────
 if(APPLE)
-    set(CPACK_GENERATOR  "DragNDrop")
-    set(CPACK_DMG_VOLUME_NAME "ToonTrad")
-    set(CPACK_DMG_FORMAT  "UDZO")
-
+    # Sur macOS : installe le .app complet (macdeployqt est lancé dans la CI
+    # AVANT cpack, ce qui peuple le .app avec les frameworks Qt)
     install(TARGETS ToonTrad
-        BUNDLE DESTINATION . COMPONENT Runtime
+            BUNDLE  DESTINATION .
+            RUNTIME DESTINATION bin
+    )
+    # python/ et resources/ à l'intérieur du bundle
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/python"
+            DESTINATION "ToonTrad.app/Contents/Resources"
+    )
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
+            DESTINATION "ToonTrad.app/Contents/Resources"
+    )
+else()
+    # Windows / Linux : install à plat dans le répertoire d'install
+    install(TARGETS ToonTrad
+            RUNTIME DESTINATION .
+    )
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/python"
+            DESTINATION .
+    )
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/resources"
+            DESTINATION .
     )
 endif()
 
-# ── Windows : installeur NSIS ─────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════════════════════
+#  CPACK — configuration commune
+# ═════════════════════════════════════════════════════════════════════════════
+set(CPACK_PACKAGE_NAME            "ToonTrad")
+set(CPACK_PACKAGE_VENDOR          "ToonTrad")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Outil de scantrad manga/webtoon")
+set(CPACK_PACKAGE_VERSION         "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_VERSION_MAJOR   "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR   "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH   "${PROJECT_VERSION_PATCH}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "ToonTrad")
+set(CPACK_RESOURCE_FILE_LICENSE   "${CMAKE_SOURCE_DIR}/LICENSE")
+
+# ── macOS : DragNDrop → .dmg ──────────────────────────────────────────────────
+if(APPLE)
+    set(CPACK_GENERATOR           "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME     "ToonTrad ${PROJECT_VERSION}")
+    set(CPACK_DMG_FORMAT          "UDZO")
+    # Nom du fichier final : ToonTrad-2.0-Darwin.dmg
+    set(CPACK_PACKAGE_FILE_NAME   "ToonTrad-${PROJECT_VERSION}-Darwin")
+endif()
+
+# ── Windows : NSIS → .exe installateur ───────────────────────────────────────
 if(WIN32)
-    set(CPACK_GENERATOR "NSIS")
-    set(CPACK_NSIS_PACKAGE_NAME        "ToonTrad")
-    set(CPACK_NSIS_DISPLAY_NAME        "ToonTrad")
-    set(CPACK_NSIS_HELP_LINK           "https://github.com/trotroni/toontrad")
-    set(CPACK_NSIS_URL_INFO_ABOUT      "https://github.com/trotroni/toontrad")
-    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\ToonTrad.exe")
-
-    if(EXISTS "${ICO_ICON}")
-        set(CPACK_NSIS_MUI_ICON   "${ICO_ICON}")
-        set(CPACK_NSIS_MUI_UNIICON "${ICO_ICON}")
-    endif()
-
-    # Raccourci menu Démarrer
+    set(CPACK_GENERATOR              "NSIS")
+    set(CPACK_NSIS_DISPLAY_NAME      "ToonTrad ${PROJECT_VERSION}")
+    set(CPACK_NSIS_PACKAGE_NAME      "ToonTrad")
+    set(CPACK_NSIS_INSTALL_ROOT      "$PROGRAMFILES64")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_MODIFY_PATH       OFF)
+    # Créer un raccourci bureau vers ToonTrad.exe
     set(CPACK_NSIS_CREATE_ICONS_EXTRA
-        "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\ToonTrad.lnk' '$INSTDIR\\\\bin\\\\ToonTrad.exe' '' '$INSTDIR\\\\bin\\\\ToonTrad.exe' 0"
+        "CreateShortcut '$DESKTOP\\\\ToonTrad.lnk' '$INSTDIR\\\\ToonTrad.exe'"
     )
     set(CPACK_NSIS_DELETE_ICONS_EXTRA
-        "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\ToonTrad.lnk'"
+        "Delete '$DESKTOP\\\\ToonTrad.lnk'"
     )
-
-    # Association fichier .ttproject → double-clic ouvre ToonTrad
-    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-        WriteRegStr HKCR '.ttproject' '' 'ToonTrad.Project'
-        WriteRegStr HKCR 'ToonTrad.Project' '' 'ToonTrad Project'
-        WriteRegStr HKCR 'ToonTrad.Project\\\\DefaultIcon' '' '$INSTDIR\\\\bin\\\\ToonTrad.exe,0'
-        WriteRegStr HKCR 'ToonTrad.Project\\\\shell\\\\open\\\\command' '' '\\\"$INSTDIR\\\\bin\\\\ToonTrad.exe\\\" \\\"%1\\\"'
-        System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
-    ")
-    set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
-        DeleteRegKey HKCR '.ttproject'
-        DeleteRegKey HKCR 'ToonTrad.Project'
-    ")
-
-    # Installe tout ce qui est dans staging/ (exe + DLLs Qt + python + resources)
-    install(DIRECTORY "${CMAKE_BINARY_DIR}/staging/"
-        DESTINATION . COMPONENT Runtime
-    )
+    # Nom du fichier final : ToonTrad-2.0-win64.exe
+    set(CPACK_PACKAGE_FILE_NAME      "ToonTrad-${PROJECT_VERSION}-win64")
 endif()
 
 include(CPack)

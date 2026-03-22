@@ -1,0 +1,163 @@
+name: Build & Draft Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+#  Variables substituées dans RELEASE_TEMPLATE :
+#  {TAG}     → v2.1.0 (le tag git complet)
+#  {VERSION} → 2.1.0  (sans le v)
+#  {DATE}    → 2026-03-22
+
+env:
+  RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE.md   # ← changer ici
+
+jobs:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  #  macOS → ToonTrad-X.Y.Z-Darwin.dmg
+  # ═══════════════════════════════════════════════════════════════════════════
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.7.3'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          cache: true
+
+      - name: Installer Python + dépendances
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt --quiet || true
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: macdeployqt (bundle Qt dans le .app)
+        run: |
+          "$Qt6_DIR/bin/macdeployqt" "build/ToonTrad.app" -verbose=1
+
+      - name: Générer le DMG (CPack DragNDrop)
+        run: cd build && cpack -G DragNDrop -V
+
+      - name: Upload artifact macOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToonTrad-macOS
+          path: build/*.dmg
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  #  Windows → ToonTrad-X.Y.Z-win64.exe
+  # ═══════════════════════════════════════════════════════════════════════════
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.7.3'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          cache: true
+
+      - name: Installer NSIS
+        run: choco install nsis --yes --no-progress
+
+      - name: Installer Python + dépendances
+        run: pip install -r requirements.txt --quiet
+        continue-on-error: true
+
+      - name: Configure CMake (MSVC x64)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: cmake install → staging
+        shell: pwsh
+        run: cmake --install build --config Release --prefix build/staging
+
+      - name: windeployqt (bundle DLLs Qt)
+        shell: pwsh
+        run: |
+          & "$env:Qt6_DIR\bin\windeployqt.exe" "build\staging\ToonTrad.exe" `
+            --release --no-translations --no-system-d3d-compiler
+
+      - name: Générer l'installateur NSIS (CPack)
+        shell: pwsh
+        run: cd build && cpack -G NSIS -V
+
+      - name: Upload artifact Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToonTrad-Windows
+          path: build\*.exe
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  #  Draft Release
+  # ═══════════════════════════════════════════════════════════════════════════
+  draft-release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (pour lire le template)
+        uses: actions/checkout@v4
+
+      - name: Télécharger artifact macOS
+        uses: actions/download-artifact@v4
+        with:
+          name: ToonTrad-macOS
+          path: artifacts/
+
+      - name: Télécharger artifact Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: ToonTrad-Windows
+          path: artifacts/
+
+      - name: Préparer les release notes depuis le template
+        env:
+          TEMPLATE: ${{ env.RELEASE_TEMPLATE }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_CLEAN="${VERSION#v}"
+          DATE=$(date +%Y-%m-%d)
+          sed \
+            -e "s/{TAG}/${VERSION}/g" \
+            -e "s/{VERSION}/${VERSION_CLEAN}/g" \
+            -e "s/{DATE}/${DATE}/g" \
+            "$TEMPLATE" > /tmp/release_notes.md
+          echo "--- Aperçu des notes ---"
+          cat /tmp/release_notes.md
+
+      - name: Créer la draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: "ToonTrad ${{ github.ref_name }}"
+          body_path: /tmp/release_notes.md
+          files: |
+            artifacts/*.dmg
+            artifacts/*.exe
