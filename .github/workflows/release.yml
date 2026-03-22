@@ -15,7 +15,7 @@ permissions:
 #  {DATE}    → 2026-03-22
 
 env:
-  RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE.md   # ← changer ici
+  RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE_1.md
 
 jobs:
 
