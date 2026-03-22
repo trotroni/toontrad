@@ -3,7 +3,7 @@ name: Build & Draft Release
 env:
   RELEASE_TEMPLATE: .github/RELEASE_TEMPLATE_1.md
   CHANGELOG_FILE:   .github/CHANGELOG_NEXT.md
-  MANUAL_VERSION:   "v2.0.0-beta"
+  MANUAL_VERSION:   "v0.0.0-test"
 
 on:
   push:
@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
     inputs:
       version_override:
-        description: 'Version tag (ex: v1.0.0) — laisser vide pour utiliser MANUAL_VERSION'
-        required: false
+        description: 'Version tag (v0.0.0-test) — laisser vide pour utiliser MANUAL_VERSION'
+        required: true
         default: ''
 
 permissions:
