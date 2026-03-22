@@ -14,7 +14,6 @@ on:
       version_override:
         description: 'Version tag (v0.0.0-test) — laisser vide pour utiliser MANUAL_VERSION'
         required: true
-        default: ''
 
 permissions:
   contents: write
