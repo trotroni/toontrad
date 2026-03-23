@@ -36,6 +36,7 @@ MainWindow::MainWindow(const QString& openPath, QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    qDebug() << "[MainWindow] open";
     ui->setupUi(this);
 
     // Moteurs OCR
@@ -86,6 +87,7 @@ MainWindow::~MainWindow()
     Config::save();
     ProjectManager::instance().save();
     delete ui;
+    qDebug() << "[MainWindow] delete ui";
 }
 
 
@@ -119,7 +121,6 @@ void MainWindow::openProjectFromPath(const QString& filePath)
         return;
     }
 
-    // Le chemin passé peut être soit le fichier .ttproject soit le dossier
     QString rootPath = fi.isDir() ? filePath : fi.absolutePath();
 
     qDebug() << "openProjectFromPath → rootPath =" << rootPath;
@@ -139,6 +140,7 @@ void MainWindow::openProjectFromPath(const QString& filePath)
 
 void MainWindow::refreshProjectList()
 {
+    qDebug() << "[MainWindow] refreshProjectList";
     ui->listProjects->clear();
     for (const auto& p : ProjectManager::instance().projects()) {
         auto* item = new QListWidgetItem(p.name);
@@ -151,6 +153,7 @@ void MainWindow::refreshProjectList()
 
 void MainWindow::openProject(const QString& rootPath)
 {
+    qDebug() << "[MainWindow] openProject";
     if (m_openWindows.contains(rootPath) && !m_openWindows[rootPath].isNull()) {
         m_openWindows[rootPath]->raise();
         m_openWindows[rootPath]->activateWindow();
@@ -175,6 +178,7 @@ void MainWindow::openProject(const QString& rootPath)
 
 void MainWindow::openSelectedProject()
 {
+    qDebug() << "[MainWindow] openSlectedProject";
     auto* item = ui->listProjects->currentItem();
     if (!item) return;
     openProject(item->data(Qt::UserRole).toString());
@@ -182,6 +186,7 @@ void MainWindow::openSelectedProject()
 
 void MainWindow::on_btnNewProject_clicked()
 {
+    qDebug() << "[MainWindow] on_btnNewProject_clicked";
     QString path = QFileDialog::getExistingDirectory(
         this, "Sélectionner le dossier du projet", QDir::homePath());
     if (path.isEmpty()) return;
@@ -193,6 +198,7 @@ void MainWindow::on_btnNewProject_clicked()
 
 void MainWindow::on_btnRemoveProject_clicked()
 {
+    qDebug() << "[MainWindow] on_btnRemoveProject_clicked";
     auto* item = ui->listProjects->currentItem();
     if (!item) return;
 
@@ -205,18 +211,37 @@ void MainWindow::on_btnRemoveProject_clicked()
     refreshProjectList();
 }
 
+void MainWindow::on_btnReloadProject_clicked()
+{
+    qDebug() << "[MainWindow] on_btnReloadProject_clicked";
+    auto* item = ui->listProjects->currentItem();
+    if (!item) return;
+
+    QString path = item->data(Qt::UserRole).toString();
+    for (auto& p : ProjectManager::instance().projects()) {
+        if (p.rootPath != path) continue;
+        p.scanImages();
+        p.save();
+        statusBar()->showMessage("Projet rechargé : " + path, 3000);
+        break;
+    }
+}
+
 void MainWindow::on_listProjects_currentRowChanged(int row)
 {
+    qDebug() << "[MainWindow] on_listProjects_currentRowChanged";
     ui->btnOpenProject->setEnabled(row >= 0);
 }
 
 void MainWindow::on_listProjects_itemDoubleClicked()
 {
+    qDebug() << "[MainWindow] on_listProjects_itemDoubleClicked";
     openSelectedProject();
 }
 
 void MainWindow::on_btnOpenProject_clicked()
 {
+    qDebug() << "[MainWindow] on_btnOpenProject_clicked";
     openSelectedProject();
 }
 
@@ -230,18 +255,18 @@ void MainWindow::detectGPUs()
     ui->lblGPUInfo->setText("Détection du matériel...");
 
     QString script = R"(
-import json, sys
-try:
-    import torch
-    gpus = []
-    if torch.cuda.is_available():
-        for i in range(torch.cuda.device_count()):
-            p = torch.cuda.get_device_properties(i)
-            gpus.append({"id": i, "name": p.name, "vram_gb": round(p.total_memory/1e9,1)})
-    print(json.dumps({"cuda": torch.cuda.is_available(), "gpus": gpus}))
-except Exception as e:
-    print(json.dumps({"cuda": False, "gpus": [], "error": str(e)}))
-)";
+        import json, sys
+        try:
+            import torch
+            gpus = []
+            if torch.cuda.is_available():
+                for i in range(torch.cuda.device_count()):
+                    p = torch.cuda.get_device_properties(i)
+                    gpus.append({"id": i, "name": p.name, "vram_gb": round(p.total_memory/1e9,1)})
+            print(json.dumps({"cuda": torch.cuda.is_available(), "gpus": gpus}))
+        except Exception as e:
+            print(json.dumps({"cuda": False, "gpus": [], "error": str(e)}))
+        )";
 
     QProcess* proc = new QProcess(this);
     connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
@@ -315,6 +340,7 @@ void MainWindow::on_comboDevice_currentIndexChanged(int)
 
 void MainWindow::on_btnSettings_clicked()
 {
+    qDebug() << "[MainWindow] on_btnSettings_clicked";
     SettingsWindow dlg(currentConfig(), this);
     if (dlg.exec() == QDialog::Accepted)
         m_config = dlg.config();
