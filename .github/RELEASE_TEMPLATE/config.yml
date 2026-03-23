@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation / Wiki
+    url: https://github.com/trotroni/toontrad/wiki
+    about: Consulte le wiki avant d'ouvrir une issue
+  - name: 💬 Discussions générales
+    url: https://github.com/trotroni/toontrad/discussions
+    about: Pour les questions et échanges informels
