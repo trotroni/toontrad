@@ -3,8 +3,6 @@
   <img src="resources/toontrad-icon-red-double-t.svg" width="40" align="up" alt="ToonTrad">
 </h1>
 
------
-
 > [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_NC-blue)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![Status](https://img.shields.io/badge/status-en%20développement-orange)
@@ -17,6 +15,8 @@
 ## Liens
 
 - GitHub : [github.com/trotroni/toontrad](https://github.com/trotroni/toontrad)
+- Site Web : [trotroni.github.io/toontrad](https://trotroni.github.io/toontrad)
+- Releases : [github.com/trotroni/toontrad/releases](https://github.com/trotroni/toontrad/releases)
 
 -----
 
