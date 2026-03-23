@@ -17,6 +17,7 @@
 - GitHub : [github.com/trotroni/toontrad](https://github.com/trotroni/toontrad)
 - Site Web : [trotroni.github.io/toontrad](https://trotroni.github.io/toontrad)
 - Releases : [github.com/trotroni/toontrad/releases](https://github.com/trotroni/toontrad/releases)
+- Issues : [github.com/trotroni/toontrad/issues](https://github.com/trotroni/toontrad/isses)
 
 -----
 
@@ -25,6 +26,15 @@
 - **C++ / Qt6** — Interface desktop
 - **Python 3** — Pipeline OCR
 - **CMake** — Build system
+
+-----
+
+## OS
+Plateforme | Statut
+-- | --
+macOS (Apple Silicon / Intel) |🔧 En test
+Windows 10/11 (64-bit) | 🔧 En test
+Linux | 🔧 Non testé
 
 -----
 
