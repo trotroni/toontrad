@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://trotroni.github.io/toontrad/</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/download.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/export.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/ocr.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/translation.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/typesetting.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/pipeline/validation.html</loc>
+  </url>
+  <url>
+    <loc>https://trotroni.github.io/toontrad/docs</loc>
+  </url>
+</urlset>
