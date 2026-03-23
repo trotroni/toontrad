@@ -6,7 +6,7 @@
 > [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_NC-blue)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![Status](https://img.shields.io/badge/status-en%20développement-orange)
-![Version](https://img.shields.io/badge/version-2.0.2--beta-red)
+![Version](https://img.shields.io/badge/version-2.0.3--beta-red)
 
 > 🚧 Projet en cours de développement actif — pas encore stable.
 
