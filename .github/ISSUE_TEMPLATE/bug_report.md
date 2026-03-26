@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Signaler un bug dans ToonTrad
-title: "[BUG] "
+title: "[BUG] - "
 labels: bug
 assignees: trotroni
 ---
