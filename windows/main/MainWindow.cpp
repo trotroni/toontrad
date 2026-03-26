@@ -4,6 +4,7 @@
 #include "../../core/models.h"
 #include "../../core/ProjectManager.h"
 #include "../image/ImageWindow.h"
+#include "../text/TextWindow.h"
 #include "../settings/SettingsWindow.h"
 
 #include <QFileDialog>
@@ -164,21 +165,48 @@ void MainWindow::openProject(const QString& rootPath)
     for (auto& p : projects) {
         if (p.rootPath != rootPath) continue;
 
-        // AVANT : OCRwindow* w = new OCRwindow(&p, currentConfig(), nullptr);
-        ImageWindow* w = new ImageWindow(&p, currentConfig(), nullptr);
-        w->setAttribute(Qt::WA_DeleteOnClose);
-        connect(w, &QObject::destroyed, this, [this, rootPath]() {
+        ImageWindow* imageWin = new ImageWindow(&p, currentConfig(), nullptr);
+        imageWin->setAttribute(Qt::WA_DeleteOnClose);
+
+        TextWindow* textWin = new TextWindow(nullptr);
+        textWin->setAttribute(Qt::WA_DeleteOnClose);
+
+        // ── ImageWindow → TextWindow ──────────────────────────────────────
+        connect(imageWin, &ImageWindow::blocksChanged,
+                textWin,  &TextWindow::setBlocks);
+        connect(imageWin, &ImageWindow::blockSelected,
+                textWin,  &TextWindow::scrollToBlock);
+
+        // ── TextWindow → ImageWindow ──────────────────────────────────────
+        connect(textWin,  &TextWindow::blockUpdated,
+                imageWin, &ImageWindow::onBlockUpdated);
+        connect(textWin,  &TextWindow::blockSelected,
+                imageWin, &ImageWindow::highlightBlock);
+        connect(textWin,  &TextWindow::blocksReordered,
+                imageWin, &ImageWindow::reorderBlocks);
+
+        // ── Fermeture liée : l'un ferme l'autre ──────────────────────────
+        connect(imageWin, &QObject::destroyed,
+                textWin,  &QWidget::close);
+        connect(textWin,  &QObject::destroyed,
+                imageWin, &QWidget::close);
+
+        // ── Nettoyage de la map ───────────────────────────────────────────
+        connect(imageWin, &QObject::destroyed, this, [this, rootPath]() {
             m_openWindows.remove(rootPath);
         });
-        m_openWindows[rootPath] = w;
-        w->show();
+
+        m_openWindows[rootPath] = imageWin;
+
+        imageWin->show();
+        textWin->show();
         return;
     }
 }
 
 void MainWindow::openSelectedProject()
 {
-    qDebug() << "[MainWindow] openSlectedProject";
+    qDebug() << "[MainWindow] openSelectedProject";
     auto* item = ui->listProjects->currentItem();
     if (!item) return;
     openProject(item->data(Qt::UserRole).toString());
@@ -187,13 +215,16 @@ void MainWindow::openSelectedProject()
 void MainWindow::on_btnNewProject_clicked()
 {
     qDebug() << "[MainWindow] on_btnNewProject_clicked";
-    QString path = QFileDialog::getExistingDirectory(
-        this, "Sélectionner le dossier du projet", QDir::homePath());
-    if (path.isEmpty()) return;
 
-    ProjectManager::instance().addProject(path);
+    NewProjectDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted) return;
+
+    QString projectPath = dlg.projectPath();
+    if (projectPath.isEmpty()) return;
+
+    ProjectManager::instance().addProject(projectPath);
     refreshProjectList();
-    statusBar()->showMessage("Projet ajouté : " + path, 3000);
+    statusBar()->showMessage("Projet créé : " + projectPath, 3000);
 }
 
 void MainWindow::on_btnRemoveProject_clicked()

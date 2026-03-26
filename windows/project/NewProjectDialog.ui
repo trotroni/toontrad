@@ -2,17 +2,19 @@
 <ui version="4.0">
  <class>NewProjectDialog</class>
  <widget class="QDialog" name="NewProjectDialog">
-  <property name="geometry"><rect><x>0</x><y>0</y><width>480</width><height>280</height></rect></property>
+  <property name="geometry"><rect><x>0</x><y>0</y><width>480</width><height>300</height></rect></property>
   <property name="windowTitle"><string>Nouveau projet ToonTrad</string></property>
   <layout class="QVBoxLayout" name="mainLayout">
 
    <item>
-    <widget class="QGroupBox">
+    <widget class="QGroupBox" name="groupInfo">
      <property name="title"><string>Informations du projet</string></property>
-     <layout class="QFormLayout">
+     <layout class="QFormLayout" name="formLayout">
 
       <item row="0" column="0">
-       <widget class="QLabel"><property name="text"><string>Nom du projet :</string></property></widget>
+       <widget class="QLabel" name="lblName">
+        <property name="text"><string>Nom du projet :</string></property>
+       </widget>
       </item>
       <item row="0" column="1">
        <widget class="QLineEdit" name="editName">
@@ -21,12 +23,23 @@
       </item>
 
       <item row="1" column="0">
-       <widget class="QLabel"><property name="text"><string>Dossier parent :</string></property></widget>
+       <widget class="QLabel" name="lblParent">
+        <property name="text"><string>Dossier parent :</string></property>
+       </widget>
       </item>
       <item row="1" column="1">
-       <layout class="QHBoxLayout">
-        <item><widget class="QLineEdit" name="editParentFolder"><property name="placeholderText"><string>Choisir un dossier…</string></property></widget></item>
-        <item><widget class="QPushButton" name="btnBrowse"><property name="text"><string>...</string></property><property name="maximumWidth"><number>30</number></property></widget></item>
+       <layout class="QHBoxLayout" name="browseLayout">
+        <item>
+         <widget class="QLineEdit" name="editParentFolder">
+          <property name="placeholderText"><string>Choisir un dossier…</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnBrowse">
+          <property name="text"><string>...</string></property>
+          <property name="maximumWidth"><number>30</number></property>
+         </widget>
+        </item>
        </layout>
       </item>
 
@@ -34,11 +47,10 @@
     </widget>
    </item>
 
-   <!-- Prévisualisation de la structure -->
    <item>
-    <widget class="QGroupBox">
+    <widget class="QGroupBox" name="groupPreview">
      <property name="title"><string>Structure qui sera créée</string></property>
-     <layout class="QVBoxLayout">
+     <layout class="QVBoxLayout" name="previewLayout">
       <item>
        <widget class="QLabel" name="lblPreview">
         <property name="text"><string>—</string></property>

@@ -10,7 +10,6 @@
 #include <QMessageBox>
 #include <QDebug>
 
-// Sous-dossiers créés automatiquement dans chaque nouveau projet
 static const QStringList PROJECT_SUBDIRS = {
     "raw",        // images originales téléchargées
     "output",     // exports TXT / JSON traductions
@@ -24,13 +23,13 @@ NewProjectDialog::NewProjectDialog(QWidget* parent)
 {
     ui->setupUi(this);
 
-    connect(ui->btnBrowse,  &QPushButton::clicked,
+    // Connexions manuelles — pas d'auto-connect via connectSlotsByName
+    connect(ui->btnBrowse, &QPushButton::clicked,
             this, &NewProjectDialog::onBrowse);
-    connect(ui->editName,   &QLineEdit::textChanged,
+    connect(ui->editName, &QLineEdit::textChanged,
             this, [this](const QString&) { updatePreview(); });
     connect(ui->editParentFolder, &QLineEdit::textChanged,
             this, [this](const QString&) { updatePreview(); });
-
     connect(ui->buttonBox, &QDialogButtonBox::accepted,
             this, &NewProjectDialog::onAccept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected,
@@ -43,8 +42,12 @@ NewProjectDialog::~NewProjectDialog() { delete ui; }
 
 void NewProjectDialog::onBrowse()
 {
+    qDebug() << "[NewProjectDialog] onBrowse";
     QString path = QFileDialog::getExistingDirectory(
-        this, "Choisir le dossier parent", QDir::homePath());
+        this,
+        "Choisir le dossier parent",
+        QDir::homePath(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontUseNativeDialog);
     if (!path.isEmpty()) {
         m_parentFolder = path;
         ui->editParentFolder->setText(path);
@@ -61,9 +64,9 @@ void NewProjectDialog::updatePreview()
         return;
     }
 
-    QString base = parent + "/" + name + "/";
+    QString base    = parent + "/" + name + "/";
     QString preview = base + "\n";
-    preview += "  ├── project.json\n";
+    preview += "  ├── .ttproject\n";
     for (int i = 0; i < PROJECT_SUBDIRS.size(); ++i) {
         bool last = (i == PROJECT_SUBDIRS.size() - 1);
         preview += QString("  %1── %2/\n")
@@ -112,31 +115,27 @@ bool NewProjectDialog::createProjectStructure(const QString& path,
 {
     QDir dir;
 
-    // Crée le dossier racine
     if (!dir.mkpath(path)) {
         qWarning() << "Impossible de créer:" << path;
         return false;
     }
 
-    // Crée les sous-dossiers
     for (const QString& sub : PROJECT_SUBDIRS) {
-        QString subPath = path + "/" + sub;
-        if (!dir.mkpath(subPath)) {
-            qWarning() << "Impossible de créer sous-dossier:" << subPath;
-        }
+        if (!dir.mkpath(path + "/" + sub))
+            qWarning() << "Impossible de créer sous-dossier:" << path + "/" + sub;
     }
 
-    // Crée project.json minimal
+    // Crée project.ttproject (JSON)
     QJsonObject root;
     root["name"]    = name;
     root["version"] = 2;
     root["pages"]   = QJsonArray();
 
-    QFile f(path + "/project.json");
+    QFile f(path + "/.ttproject");
     if (f.open(QIODevice::WriteOnly)) {
         f.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
         f.close();
-        qDebug() << "project.json créé →" << path;
+        qDebug() << "[NewProjectDialog] project.ttproject créé →" << path;
     }
 
     return true;

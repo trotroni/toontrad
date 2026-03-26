@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QEvent>
 #include "../../core/OCRConfig.h"
+#include "../project/NewProjectDialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

@@ -6,6 +6,7 @@
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
+    app.setQuitOnLastWindowClosed(true);
     app.setApplicationName("ToonTrad");
     app.setOrganizationName("ToonTrad");
     app.setApplicationVersion(Config::VERSION_STR);

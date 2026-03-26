@@ -14,7 +14,7 @@ find_program(PYTHON_EXEC NAMES python3 python REQUIRED)
 message(STATUS "Python trouvé : ${PYTHON_EXEC}")
 
 # ── 1. Génération automatique des icônes depuis le SVG ────────────────────────
-set(SVG_ICON     "${CMAKE_SOURCE_DIR}/resources/toontrad-icon-red-double-t.svg")
+set(SVG_ICON     "${CMAKE_SOURCE_DIR}/resources/toontrad-icon.svg")
 set(ICO_ICON     "${CMAKE_SOURCE_DIR}/resources/ToonTrad.ico")
 set(ICNS_ICON    "${CMAKE_SOURCE_DIR}/resources/ToonTrad.icns")
 set(ICNS_PROJECT "${CMAKE_SOURCE_DIR}/resources/ttproject.icns")
