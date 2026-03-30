@@ -1,7 +1,7 @@
 ---
 name: 💡 Feature Request
 about: Proposer une nouvelle fonctionnalité
-title: "[FEAT] "
+title: "[FEAT] - "
 labels: enhancement
 assignees: ''
 ---
