@@ -62,7 +62,7 @@ bool Exporter::exportJSON(const std::vector<TextBlock>& blocks,
     return true;
 }
 
-// ─── JSON Photoshop ───────────────────────────────────────────────────────────
+// ─── JSON Photoshop — version corrigée avec champ polygon ──────────────────
 bool Exporter::exportPhotoshopJSON(const std::vector<TextBlock>& blocks,
                                     const QString& imageName,
                                     const QString& filePath)
@@ -80,7 +80,7 @@ bool Exporter::exportPhotoshopJSON(const std::vector<TextBlock>& blocks,
         obj["status"] = b.status;
         obj["notes"]  = b.notes;
 
-        // Coordonnées rectangle externe
+        // ── Rectangle externe ─────────────────────────────────────────────
         QJsonObject rect;
         rect["x"] = b.boundingBox.x();
         rect["y"] = b.boundingBox.y();
@@ -88,7 +88,7 @@ bool Exporter::exportPhotoshopJSON(const std::vector<TextBlock>& blocks,
         rect["h"] = b.boundingBox.height();
         obj["rect"] = rect;
 
-        // Coordonnées rectangle interne (zone texte PS)
+        // ── Rectangle interne (zone texte PS) ─────────────────────────────
         QJsonObject ir;
         ir["x"] = b.innerRect.x();
         ir["y"] = b.innerRect.y();
@@ -96,11 +96,34 @@ bool Exporter::exportPhotoshopJSON(const std::vector<TextBlock>& blocks,
         ir["h"] = b.innerRect.height();
         obj["inner_rect"] = ir;
 
-        // Centre (pratique pour le plugin PS)
+        // ── Centre ────────────────────────────────────────────────────────
         QJsonObject center;
         center["cx"] = b.boundingBox.x() + b.boundingBox.width()  / 2;
         center["cy"] = b.boundingBox.y() + b.boundingBox.height() / 2;
         obj["center"] = center;
+
+        // ── Polygon ───────────────────────────────────────────────────────
+        // Format : [[x,y], [x,y], ...]  — lu par le plugin PS pour le fond
+        QJsonArray polyArr;
+        if (!b.polygon.isEmpty()) {
+            for (const QPoint& pt : b.polygon) {
+                QJsonArray ptArr;
+                ptArr.append(pt.x());
+                ptArr.append(pt.y());
+                polyArr.append(ptArr);
+            }
+        } else {
+            // Fallback : 4 coins du boundingBox (toujours valide)
+            const QRect& r = b.boundingBox;
+            auto addPt = [&](int x, int y) {
+                QJsonArray pt; pt << x << y; polyArr.append(pt);
+            };
+            addPt(r.x(),         r.y());
+            addPt(r.x() + r.w(), r.y());
+            addPt(r.x() + r.w(), r.y() + r.h());
+            addPt(r.x(),         r.y() + r.h());
+        }
+        obj["polygon"] = polyArr;
 
         arr.append(obj);
     }

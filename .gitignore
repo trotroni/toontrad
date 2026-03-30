@@ -2,6 +2,7 @@
 # CLion / CMake
 # ----------------------
 cmake-build-*/
+build/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake

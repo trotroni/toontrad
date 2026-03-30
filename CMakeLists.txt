@@ -276,3 +276,9 @@ if(WIN32)
 endif()
 
 include(CPack)
+
+add_custom_target(package_dmg ALL
+        COMMAND ${CMAKE_CPACK_COMMAND} -G DragNDrop
+        DEPENDS ToonTrad
+        COMMENT "Génération du DMG avec CPack"
+)
