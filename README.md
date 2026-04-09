@@ -1,6 +1,6 @@
 <h1>
   ToonTrad
-  <img src="[resources/toontrad-icon-red-double-t.svg](https://trotroni.github.io/toontrad/toontrad-red-favicon.svg)" width="40" align="up" alt="ToonTrad">
+  <img src="https://trotroni.github.io/toontrad/toontrad-red-favicon.svg" width="40" align="up" alt="ToonTrad">
 </h1>
 
 > [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_NC-blue)](https://polyformproject.org/licenses/noncommercial/1.0.0)
