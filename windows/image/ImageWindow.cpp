@@ -45,6 +45,16 @@ ImageWindow::ImageWindow(Project* project, const OCRConfig& config, QWidget* par
     connect(canvas, &ImageCanvas::dragBubbleRequested,
             this,   &ImageWindow::onDragBubbleRequested);
 
+    // Synchronise m_autoOCR avec la checkbox
+    m_autoOCR = ui->chkAutoOCR->isChecked();
+    connect(ui->chkAutoOCR, &QCheckBox::toggled,
+            this, [this](bool checked) {
+        m_autoOCR = checked;
+        ui->lblStatus->setText(
+            checked ? "OCR automatique activé"
+                    : "OCR manuel — dessinez une zone puis remplissez le RAW");
+    });
+
     if (!project->pages.isEmpty())
         loadPage(0);
     else
@@ -82,7 +92,7 @@ int ImageWindow::nextBlockId()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Navigation — PAS de détection auto au chargement
+//  Navigation
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ImageWindow::loadPage(int index)
@@ -92,7 +102,7 @@ void ImageWindow::loadPage(int index)
 
     m_currentPageIndex = index;
     displayImage();
-    displayBlocks();   // affiche les blocs existants (sauvegardés)
+    displayBlocks();
     updateNavButtons();
 
     emit pageChanged(index);
@@ -148,7 +158,7 @@ void ImageWindow::on_btnNext_clicked()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  OCR — Relance sur les zones EXISTANTES (ne supprime pas les bulles)
+//  OCR — Relance sur les zones existantes
 // ─────────────────────────────────────────────────────────────────────────────
 
 void ImageWindow::on_btnRunOCR_clicked()
@@ -173,7 +183,6 @@ void ImageWindow::on_btnRunOCR_clicked()
     ui->lblStatus->setText("Re-OCR en cours sur les zones existantes…");
     qApp->processEvents();
 
-    // Construit la liste des rects existants pour mode=reocr
     QJsonArray rectsArr;
     for (const auto& b : page->blocks) {
         QJsonObject entry;
@@ -210,25 +219,19 @@ void ImageWindow::on_btnRunOCR_clicked()
         qDebug() << "detect.py stderr:" << stderrData;
 
     if (process.exitCode() != 0) {
-        QMessageBox::critical(this, "Erreur OCR",
-            QString::fromUtf8(stderrData));
+        QMessageBox::critical(this, "Erreur OCR", QString::fromUtf8(stderrData));
         ui->btnRunOCR->setEnabled(true);
         return;
     }
 
-    // Parse résultats et met à jour UNIQUEMENT le texte des blocs existants
-    QJsonDocument doc = QJsonDocument::fromJson(
-        process.readAllStandardOutput());
+    QJsonDocument doc = QJsonDocument::fromJson(process.readAllStandardOutput());
     if (doc.isArray()) {
         for (const QJsonValue& v : doc.array()) {
             QJsonObject obj = v.toObject();
             int bid  = obj["id"].toInt();
             QString raw = obj["raw"].toString();
             for (auto& b : page->blocks) {
-                if (b.id == bid) {
-                    b.originalText = raw;
-                    break;
-                }
+                if (b.id == bid) { b.originalText = raw; break; }
             }
         }
         page->ocrDone = true;
@@ -241,7 +244,7 @@ void ImageWindow::on_btnRunOCR_clicked()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  OCR sur un crop (appelé après drag)
+//  OCR sur un crop
 // ─────────────────────────────────────────────────────────────────────────────
 
 QString ImageWindow::runOCROnCrop(const QString& cropPath)
@@ -260,24 +263,14 @@ QString ImageWindow::runOCROnCrop(const QString& cropPath)
 
     if (!process.waitForStarted(10000) || !process.waitForFinished(30000)) {
         process.kill();
-        qWarning() << "Timeout OCR crop";
         return {};
     }
 
-    QByteArray stderrData = process.readAllStandardError();
-    if (!stderrData.isEmpty())
-        qDebug() << "detect.py crop stderr:" << stderrData;
+    if (process.exitCode() != 0) return {};
 
-    if (process.exitCode() != 0) {
-        qWarning() << "OCR crop erreur:" << stderrData;
-        return {};
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(
-        process.readAllStandardOutput());
-    if (doc.isArray() && !doc.array().isEmpty()) {
+    QJsonDocument doc = QJsonDocument::fromJson(process.readAllStandardOutput());
+    if (doc.isArray() && !doc.array().isEmpty())
         return doc.array().first().toObject()["raw"].toString();
-    }
     return {};
 }
 
@@ -313,20 +306,12 @@ void ImageWindow::reorderBlocks(const QList<int>& newIdOrder)
     ImagePage* page = currentPage();
     if (!page) return;
 
-    // Réordonne page->blocks selon le nouvel ordre des IDs
     std::vector<TextBlock> reordered;
     reordered.reserve(page->blocks.size());
+    for (int id : newIdOrder)
+        for (const auto& b : page->blocks)
+            if (b.id == id) { reordered.push_back(b); break; }
 
-    for (int id : newIdOrder) {
-        for (const auto& b : page->blocks) {
-            if (b.id == id) {
-                reordered.push_back(b);
-                break;
-            }
-        }
-    }
-
-    // Réassigne les IDs séquentiellement
     for (int i = 0; i < (int)reordered.size(); ++i)
         reordered[i].id = i + 1;
 
@@ -340,45 +325,35 @@ void ImageWindow::reorderBlocks(const QList<int>& newIdOrder)
 //  Interactions canvas
 // ─────────────────────────────────────────────────────────────────────────────
 
-void ImageWindow::onBlockSelectedOnCanvas(int id)
-{
-    emit blockSelected(id);
-}
+void ImageWindow::onBlockSelectedOnCanvas(int id) { emit blockSelected(id); }
 
 void ImageWindow::onBlockDeleteRequested(int id)
 {
     ImagePage* page = currentPage();
     if (!page) return;
-
     page->blocks.erase(
         std::remove_if(page->blocks.begin(), page->blocks.end(),
                        [id](const TextBlock& b) { return b.id == id; }),
         page->blocks.end());
-
     displayBlocks();
     ui->lblStatus->setText(QString("Bulle #%1 supprimée.").arg(id));
 }
 
 void ImageWindow::onAddBubbleRequested(QPointF scenePos)
 {
-    // Ajoute une bulle vide au point cliqué (menu contextuel "ajouter ici")
     ImagePage* page = currentPage();
     if (!page) return;
-
     QRect rect(static_cast<int>(scenePos.x()) - 75,
                static_cast<int>(scenePos.y()) - 40, 150, 80);
     TextBlock b(nextBlockId(), rect, "");
     page->blocks.push_back(b);
-
     displayBlocks();
     ui->lblStatus->setText(
-        QString("Bulle #%1 ajoutée (vide). Cliquez 'Re-OCR' pour détecter le texte.")
-            .arg(b.id));
+        QString("Bulle #%1 ajoutée (vide).").arg(b.id));
 }
 
 void ImageWindow::onDragBubbleRequested(QRectF rect)
 {
-    // Drag → crop → OCR immédiat en arrière-plan
     ImagePage* page = currentPage();
     if (!page) return;
 
@@ -389,12 +364,22 @@ void ImageWindow::onDragBubbleRequested(QRectF rect)
     QRect r(static_cast<int>(rect.x()), static_cast<int>(rect.y()),
             static_cast<int>(rect.width()), static_cast<int>(rect.height()));
 
+    // ── Mode manuel : bulle vide, pas d'OCR ──────────────────────────────
+    if (!m_autoOCR) {
+        TextBlock b(bid, r, "");
+        page->blocks.push_back(b);
+        displayBlocks();
+        ui->lblStatus->setText(
+            QString("Bulle #%1 créée — remplissez le RAW manuellement.").arg(bid));
+        return;
+    }
+
+    // ── Mode auto : OCR immédiat ──────────────────────────────────────────
     ui->lblStatus->setText(QString("OCR en cours sur la zone #%1…").arg(bid));
     qApp->processEvents();
 
     QString pyErr;
     if (!OCRManager::checkPythonAvailable(&pyErr)) {
-        // Ajoute la bulle sans texte si Python non dispo
         TextBlock b(bid, r, "");
         page->blocks.push_back(b);
         displayBlocks();
@@ -402,7 +387,6 @@ void ImageWindow::onDragBubbleRequested(QRectF rect)
         return;
     }
 
-    // Crop l'image vers un fichier temporaire
     QImage fullImg(imgPath);
     QRect clampedRect = r.intersected(fullImg.rect());
     if (clampedRect.isEmpty()) return;
@@ -412,11 +396,9 @@ void ImageWindow::onDragBubbleRequested(QRectF rect)
                       QString("/toontrad_crop_%1.png").arg(bid);
     crop.save(tmpPath);
 
-    // Lance OCR sur le crop
     QString rawText = runOCROnCrop(tmpPath);
     QFile::remove(tmpPath);
 
-    // Crée la bulle avec le texte détecté (ou vide si rien trouvé)
     TextBlock b(bid, clampedRect, rawText);
     page->blocks.push_back(b);
     page->ocrDone = true;
@@ -439,8 +421,7 @@ void ImageWindow::on_btnSave_clicked()
 {
     if (m_project) {
         m_project->save();
-        ui->lblStatus->setText("Sauvegardé → " +
-                               m_project->rootPath + "/project.json");
+        ui->lblStatus->setText("Sauvegardé → " + m_project->rootPath);
     }
 }
 
@@ -452,10 +433,9 @@ void ImageWindow::on_btnExportTXT_clicked()
     }
     QString folder = m_project->rootPath + "/output";
     QDir().mkpath(folder);
-    QString saved = folder + "/" + QFileInfo(currentImagePath()).completeBaseName() + ".txt";
     Exporter exp;
     exp.exportTXT(page->blocks, QFileInfo(currentImagePath()).fileName(), folder);
-    ui->lblStatus->setText("TXT → " + saved);
+    ui->lblStatus->setText("TXT → " + folder);
 }
 
 void ImageWindow::on_btnExportJSON_clicked()
@@ -466,8 +446,7 @@ void ImageWindow::on_btnExportJSON_clicked()
     }
     QString folder = m_project->rootPath + "/output";
     QDir().mkpath(folder);
-    QString base = QFileInfo(currentImagePath()).completeBaseName();
-    QString path = folder + "/" + base + ".json";
+    QString path = folder + "/" + QFileInfo(currentImagePath()).completeBaseName() + ".json";
     Exporter exp;
     exp.exportJSON(page->blocks, QFileInfo(currentImagePath()).fileName(), path);
     ui->lblStatus->setText("JSON → " + path);
@@ -481,8 +460,7 @@ void ImageWindow::on_btnExportPNG_clicked()
     }
     QString folder = m_project->rootPath + "/renders";
     QDir().mkpath(folder);
-    QString base = QFileInfo(currentImagePath()).completeBaseName();
-    QString path = folder + "/" + base + "_trad.png";
+    QString path = folder + "/" + QFileInfo(currentImagePath()).completeBaseName() + "_trad.png";
     QImage img(currentImagePath());
     Exporter exp;
     exp.exportPNG(img, page->blocks, path);
@@ -497,8 +475,7 @@ void ImageWindow::on_btnExportPS_clicked()
     }
     QString folder = m_project->rootPath + "/photoshop";
     QDir().mkpath(folder);
-    QString base = QFileInfo(currentImagePath()).completeBaseName();
-    QString path = folder + "/" + base + "_ps.json";
+    QString path = folder + "/" + QFileInfo(currentImagePath()).completeBaseName() + "_ps.json";
     Exporter exp;
     exp.exportPhotoshopJSON(page->blocks,
                              QFileInfo(currentImagePath()).fileName(), path);
@@ -507,10 +484,9 @@ void ImageWindow::on_btnExportPS_clicked()
 
 void ImageWindow::on_btnExportAll_clicked()
 {
-    // Export toutes les pages dans leurs dossiers respectifs
-    QString outFolder  = m_project->rootPath + "/output";
-    QString renFolder  = m_project->rootPath + "/renders";
-    QString psFolder   = m_project->rootPath + "/photoshop";
+    QString outFolder = m_project->rootPath + "/output";
+    QString renFolder = m_project->rootPath + "/renders";
+    QString psFolder  = m_project->rootPath + "/photoshop";
     QDir().mkpath(outFolder);
     QDir().mkpath(renFolder);
     QDir().mkpath(psFolder);
@@ -532,9 +508,7 @@ void ImageWindow::on_btnExportAll_clicked()
         count++;
     }
 
-    // Fichier consolidé dans output/
-    Exporter::exportConsolidated(outFolder,
-                                  outFolder + "/translations_final.txt");
+    Exporter::exportConsolidated(outFolder, outFolder + "/translations_final.txt");
 
     ui->lblStatus->setText(
         QString("Export complet : %1 page(s) → %2").arg(count).arg(m_project->rootPath));

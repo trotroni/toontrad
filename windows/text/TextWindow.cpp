@@ -10,6 +10,8 @@
 #include <QComboBox>
 #include <QListWidgetItem>
 #include <QEvent>
+#include <QMouseEvent>
+#include <QApplication>
 #include <QDebug>
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,15 +31,11 @@ TextWindow::TextWindow(QWidget* parent)
     m_list->setSpacing(2);
     m_list->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
-    // Remplace le QScrollArea par le QListWidget dans le layout
     auto* rootLayout = qobject_cast<QVBoxLayout*>(ui->centralwidget->layout());
     QLayoutItem* old = rootLayout->takeAt(1);
     if (old) { if (old->widget()) old->widget()->hide(); delete old; }
     rootLayout->insertWidget(1, m_list);
 
-    // ── Connexion rowsMoved avec la signature correcte ────────────────────
-    // Qt envoie rowsMoved APRÈS le déplacement interne — c'est le bon moment
-    // pour re-assigner les setItemWidget (qui ne suivent pas le drag).
     connect(m_list->model(), &QAbstractItemModel::rowsMoved,
             this, &TextWindow::onRowsMoved);
 }
@@ -50,7 +48,7 @@ TextWindow::~TextWindow() { delete ui; }
 
 void TextWindow::clearPanels()
 {
-    m_list->clear();       // supprime items ET libère les widgets setItemWidget
+    m_list->clear();
     m_blockData.clear();
     m_order.clear();
 }
@@ -64,7 +62,6 @@ void TextWindow::setBlocks(const std::vector<TextBlock>& blocks)
         m_order.append(b.id);
     }
 
-    // Crée les items vides dans le bon ordre, puis assigne les widgets
     for (int bid : m_order) {
         auto* item = new QListWidgetItem(m_list);
         item->setData(Qt::UserRole, bid);
@@ -82,12 +79,10 @@ void TextWindow::scrollToBlock(int id)
         auto* item = m_list->item(i);
         if (item->data(Qt::UserRole).toInt() != id) continue;
 
-        // Reset highlight de tous les frames
-        for (int j = 0; j < m_list->count(); ++j) {
+        for (int j = 0; j < m_list->count(); ++j)
             if (auto* w = m_list->itemWidget(m_list->item(j)))
                 w->setStyleSheet("QFrame { border: 1px solid #444; }");
-        }
-        // Surligne le frame ciblé
+
         if (auto* w = m_list->itemWidget(item))
             w->setStyleSheet("QFrame { border: 2px solid #FFD700; }");
 
@@ -102,7 +97,6 @@ void TextWindow::scrollToBlock(int id)
 
 void TextWindow::buildWidget(int bid)
 {
-    // Trouve l'item correspondant dans la liste
     QListWidgetItem* targetItem = nullptr;
     for (int i = 0; i < m_list->count(); ++i) {
         if (m_list->item(i)->data(Qt::UserRole).toInt() == bid) {
@@ -125,9 +119,14 @@ void TextWindow::buildWidget(int bid)
     // ── En-tête ───────────────────────────────────────────────────────────
     QHBoxLayout* hl = new QHBoxLayout();
 
+    // Poignée de drag — intercepte les événements souris pour le drag manuel
     QLabel* dragHandle = new QLabel("⠿");
-    dragHandle->setStyleSheet("color:#555; font-size:16px; padding:0 4px;");
+    dragHandle->setStyleSheet("color:#aaa; font-size:18px; padding:0 6px;");
     dragHandle->setToolTip("Glisser pour réordonner");
+    dragHandle->setCursor(Qt::SizeVerCursor);
+    dragHandle->setProperty("isDragHandle", true);
+    dragHandle->setProperty("bubbleId", bid);
+    dragHandle->installEventFilter(this);
 
     QLabel* idLbl = new QLabel(
         QString("<b>Bulle #%1</b> &nbsp;"
@@ -138,19 +137,21 @@ void TextWindow::buildWidget(int bid)
             .arg(block.boundingBox.x()).arg(block.boundingBox.y())
             .arg(block.boundingBox.width()).arg(block.boundingBox.height()));
     idLbl->setTextFormat(Qt::RichText);
+    idLbl->setProperty("bubbleId", bid);
+    idLbl->installEventFilter(this);
 
     hl->addWidget(dragHandle);
     hl->addWidget(idLbl);
     hl->addStretch();
     vl->addLayout(hl);
 
-    // ── RAW ──────────────────────────────────────────────────────────────
+    // ── RAW (éditable) ────────────────────────────────────────────────────
     QLabel* rawLbl = new QLabel("RAW :");
     rawLbl->setStyleSheet("font-size:11px; color:#888;");
     QTextEdit* rawEdit = new QTextEdit();
     rawEdit->setPlainText(block.originalText);
     rawEdit->setFixedHeight(55);
-    rawEdit->setReadOnly(true);
+    rawEdit->setPlaceholderText("Texte OCR brut — modifiable…");
     vl->addWidget(rawLbl);
     vl->addWidget(rawEdit);
 
@@ -187,10 +188,10 @@ void TextWindow::buildWidget(int bid)
     vl->addWidget(notesLbl);
     vl->addWidget(notesEdit);
 
-    // ── Connexions live → sauvegarde dans m_blockData ─────────────────────
-    auto emitUpdate = [this, bid, tradEdit, statusBox, notesEdit]() {
-        // Met à jour le cache local
+    // ── Connexions live ───────────────────────────────────────────────────
+    auto emitUpdate = [this, bid, rawEdit, tradEdit, statusBox, notesEdit]() {
         if (m_blockData.contains(bid)) {
+            m_blockData[bid].originalText   = rawEdit->toPlainText();
             m_blockData[bid].translatedText = tradEdit->toPlainText();
             m_blockData[bid].status         = statusBox->currentText();
             m_blockData[bid].notes          = notesEdit->toPlainText();
@@ -200,15 +201,12 @@ void TextWindow::buildWidget(int bid)
                           statusBox->currentText(),
                           notesEdit->toPlainText());
     };
+    connect(rawEdit,   &QTextEdit::textChanged, this, emitUpdate);
     connect(tradEdit,  &QTextEdit::textChanged, this, emitUpdate);
     connect(notesEdit, &QTextEdit::textChanged, this, emitUpdate);
     connect(statusBox, &QComboBox::currentTextChanged,
             this, [emitUpdate](const QString&) { emitUpdate(); });
 
-    // Clic sur le panneau → blockSelected
-    frame->installEventFilter(this);
-
-    // ── Affectation à l'item ──────────────────────────────────────────────
     frame->adjustSize();
     targetItem->setSizeHint(QSize(frame->sizeHint().width(),
                                    frame->sizeHint().height() + 8));
@@ -216,21 +214,11 @@ void TextWindow::buildWidget(int bid)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Reconstruction de TOUS les widgets (nécessaire après un drag)
-//
-//  Explication du bug Qt corrigé ici :
-//  QListWidget::setItemWidget stocke widget↔item par POINTEUR d'item.
-//  Lors d'un drag interne, les QListWidgetItem* sont déplacés dans le modèle
-//  mais les widgets (qui sont des enfants de QListWidget viewport) restent
-//  associés à leur position initiale. Résultat : le widget affiché ne
-//  correspond plus à l'item après le drag.
-//  Solution : après rowsMoved, on relit l'ordre réel des items et on
-//  réassigne setItemWidget pour chaque item dans le bon ordre.
+//  Reconstruction de tous les widgets après drag
 // ─────────────────────────────────────────────────────────────────────────────
 
 void TextWindow::rebuildAllWidgets()
 {
-    // Reconstruit dans l'ordre actuel des items
     for (int i = 0; i < m_list->count(); ++i) {
         int bid = m_list->item(i)->data(Qt::UserRole).toInt();
         buildWidget(bid);
@@ -238,37 +226,98 @@ void TextWindow::rebuildAllWidgets()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Slot rowsMoved — déclenché APRÈS le drag interne
+//  Slot rowsMoved
 // ─────────────────────────────────────────────────────────────────────────────
 
-void TextWindow::onRowsMoved(const QModelIndex& /*parent*/,
-                              int /*start*/, int /*end*/,
-                              const QModelIndex& /*destination*/,
-                              int /*row*/)
+void TextWindow::onRowsMoved(const QModelIndex&, int, int, const QModelIndex&, int)
 {
-    // 1. Relit le nouvel ordre des IDs depuis le modèle
     m_order.clear();
     for (int i = 0; i < m_list->count(); ++i)
         m_order.append(m_list->item(i)->data(Qt::UserRole).toInt());
 
-    // 2. Reconstruit les widgets dans le bon ordre
-    //    (corrige le désalignement item↔widget causé par le drag Qt)
     rebuildAllWidgets();
-
-    // 3. Notifie l'ImageWindow et le ProjectManager du nouvel ordre
     emit blocksReordered(m_order);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Event filter — clic sur panneau → blockSelected
+//  Event filter
+//
+//  - Clic sur idLbl  → blockSelected
+//  - Drag depuis dragHandle → relaye les événements souris au viewport
+//    du QListWidget pour que le drag natif se déclenche
 // ─────────────────────────────────────────────────────────────────────────────
 
 bool TextWindow::eventFilter(QObject* obj, QEvent* event)
 {
+    auto* w = qobject_cast<QWidget*>(obj);
+    if (!w) return false;
+
+    const bool isDragHandle = w->property("isDragHandle").toBool();
+    const bool hasBubbleId  = w->property("bubbleId").isValid();
+
     if (event->type() == QEvent::MouseButtonPress) {
-        auto* w = qobject_cast<QWidget*>(obj);
-        if (w && w->property("bubbleId").isValid())
+        auto* me = static_cast<QMouseEvent*>(event);
+
+        // Clic → sélection de la bulle
+        if (hasBubbleId)
             emit blockSelected(w->property("bubbleId").toInt());
+
+        if (isDragHandle && me->button() == Qt::LeftButton) {
+            // Mémorise la position de départ pour le drag
+            m_dragInProgress = true;
+            m_dragStartPos   = me->globalPosition().toPoint();
+
+            // Trouve la ligne dans la liste correspondant à cette poignée
+            int bid = w->property("bubbleId").toInt();
+            m_dragSourceRow = -1;
+            for (int i = 0; i < m_list->count(); ++i) {
+                if (m_list->item(i)->data(Qt::UserRole).toInt() == bid) {
+                    m_dragSourceRow = i;
+                    break;
+                }
+            }
+
+            // Sélectionne l'item dans la liste (nécessaire pour le drag Qt)
+            if (m_dragSourceRow >= 0)
+                m_list->setCurrentRow(m_dragSourceRow);
+
+            // Relaie le MouseButtonPress au viewport pour initier le drag
+            QPoint viewPos = m_list->viewport()->mapFromGlobal(
+                me->globalPosition().toPoint());
+            QMouseEvent relayed(QEvent::MouseButtonPress,
+                                viewPos,
+                                me->globalPosition().toPoint(),
+                                me->button(), me->buttons(), me->modifiers());
+            QApplication::sendEvent(m_list->viewport(), &relayed);
+            return true;  // consommé — on gère nous-mêmes
+        }
     }
-    return QMainWindow::eventFilter(obj, event);
+
+    if (event->type() == QEvent::MouseMove && m_dragInProgress) {
+        auto* me = static_cast<QMouseEvent*>(event);
+        QPoint viewPos = m_list->viewport()->mapFromGlobal(
+            me->globalPosition().toPoint());
+        QMouseEvent relayed(QEvent::MouseMove,
+                            viewPos,
+                            me->globalPosition().toPoint(),
+                            me->button(), me->buttons(), me->modifiers());
+        QApplication::sendEvent(m_list->viewport(), &relayed);
+        return true;
+    }
+
+    if (event->type() == QEvent::MouseButtonRelease && m_dragInProgress) {
+        m_dragInProgress = false;
+        m_dragSourceRow  = -1;
+        auto* me = static_cast<QMouseEvent*>(event);
+        QPoint viewPos = m_list->viewport()->mapFromGlobal(
+            me->globalPosition().toPoint());
+        QMouseEvent relayed(QEvent::MouseButtonRelease,
+                            viewPos,
+                            me->globalPosition().toPoint(),
+                            me->button(), me->buttons(), me->modifiers());
+        QApplication::sendEvent(m_list->viewport(), &relayed);
+        return true;
+    }
+
+    return false;
 }

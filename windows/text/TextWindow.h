@@ -39,10 +39,12 @@ private:
     Ui::TextWindow* ui;
     QListWidget*    m_list   = nullptr;
 
-    // Stocke les données brutes pour reconstruire les widgets après drag
     QMap<int, TextBlock> m_blockData;
-    // Ordre courant des IDs (reflète l'ordre visuel)
     QList<int>           m_order;
+
+    bool   m_dragInProgress = false;
+    QPoint m_dragStartPos;
+    int    m_dragSourceRow  = -1;
 
     void clearPanels();
     void buildWidget(int bid);

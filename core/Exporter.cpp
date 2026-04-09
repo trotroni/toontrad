@@ -119,9 +119,9 @@ bool Exporter::exportPhotoshopJSON(const std::vector<TextBlock>& blocks,
                 QJsonArray pt; pt << x << y; polyArr.append(pt);
             };
             addPt(r.x(),         r.y());
-            addPt(r.x() + r.w(), r.y());
-            addPt(r.x() + r.w(), r.y() + r.h());
-            addPt(r.x(),         r.y() + r.h());
+            addPt(r.x() + r.width(),  r.y());
+            addPt(r.x() + r.width(),  r.y() + r.height());
+            addPt(r.x(),              r.y() + r.height());
         }
         obj["polygon"] = polyArr;
 

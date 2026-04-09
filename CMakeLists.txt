@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ToonTrad VERSION 2.0.0 LANGUAGES CXX)
+project(ToonTrad VERSION "2.0.3.0" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,10 +14,10 @@ find_program(PYTHON_EXEC NAMES python3 python REQUIRED)
 message(STATUS "Python trouvé : ${PYTHON_EXEC}")
 
 # ── 1. Génération automatique des icônes depuis le SVG ────────────────────────
-set(SVG_ICON     "${CMAKE_SOURCE_DIR}/resources/toontrad-icon.svg")
-set(ICO_ICON     "${CMAKE_SOURCE_DIR}/resources/ToonTrad.ico")
-set(ICNS_ICON    "${CMAKE_SOURCE_DIR}/resources/ToonTrad.icns")
-set(ICNS_PROJECT "${CMAKE_SOURCE_DIR}/resources/ttproject.icns")
+set(SVG_ICON     "${CMAKE_SOURCE_DIR}/resources/toontrad-icon-raw.svg")
+set(ICO_ICON     "${CMAKE_SOURCE_DIR}/resources/tt-icon-win.ico")
+set(ICNS_ICON    "${CMAKE_SOURCE_DIR}/resources/tt-icon-mac.icns")
+set(ICNS_PROJECT "${CMAKE_SOURCE_DIR}/resources/tt-project.icns")
 
 add_custom_command(
     OUTPUT "${ICO_ICON}" "${ICNS_ICON}" "${ICNS_PROJECT}"
@@ -33,12 +33,23 @@ add_custom_target(generate_icons
 
 # ── 2. Téléchargement automatique de tessdata au build ────────────────────────
 set(TESSDATA_DIR "${CMAKE_SOURCE_DIR}/resources/tessdata")
-add_custom_target(download_tessdata ALL
-    COMMAND ${PYTHON_EXEC}
+
+# Fichiers attendus après téléchargement
+set(TESSDATA_STAMP "${CMAKE_BINARY_DIR}/tessdata_downloaded.stamp")
+
+add_custom_command(
+        OUTPUT "${TESSDATA_STAMP}"
+        COMMAND ${PYTHON_EXEC}
         "${CMAKE_SOURCE_DIR}/scripts/download_tessdata.py"
         "${TESSDATA_DIR}"
-    COMMENT "Vérification/téléchargement des modèles Tesseract (tessdata)..."
-    VERBATIM
+        COMMAND ${CMAKE_COMMAND} -E touch "${TESSDATA_STAMP}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/scripts/download_tessdata.py"
+        COMMENT "Vérification/téléchargement des modèles Tesseract (tessdata)..."
+        VERBATIM
+)
+
+add_custom_target(download_tessdata ALL
+        DEPENDS "${TESSDATA_STAMP}"
 )
 
 # ── 3. Sources ────────────────────────────────────────────────────────────────
@@ -167,6 +178,42 @@ if(APPLE)
     endif()
 
 else()
+
+# ── 8. Création du venv Python avec les dépendances ──────────────────────────
+set(VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
+set(VENV_STAMP "${CMAKE_BINARY_DIR}/venv_installed.stamp")
+
+add_custom_command(
+        OUTPUT "${VENV_STAMP}"
+        COMMAND ${PYTHON_EXEC} -m venv "${VENV_DIR}"
+        COMMAND "${VENV_DIR}/bin/pip" install --upgrade pip --quiet
+        COMMAND "${VENV_DIR}/bin/pip" install
+        opencv-python-headless
+        pytesseract
+        pillow
+        --quiet
+        COMMAND ${CMAKE_COMMAND} -E touch "${VENV_STAMP}"
+        DEPENDS "${CMAKE_SOURCE_DIR}/python/requirements.txt"
+        COMMENT "Création du venv Python + installation des dépendances..."
+        VERBATIM
+)
+
+add_custom_target(python_venv ALL DEPENDS "${VENV_STAMP}")
+add_dependencies(ToonTrad python_venv)
+
+if(APPLE)
+    add_custom_command(TARGET ToonTrad POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/python" "${BUNDLE_CONTENTS}/python"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/resources" "${BUNDLE_CONTENTS}/resources"
+            # Ajoute cette ligne :
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${VENV_DIR}" "${BUNDLE_CONTENTS}/python_venv"
+            COMMENT "Copie python/, resources/ et venv dans le bundle"
+    )
+endif()
+
     # ── Windows / Linux ───────────────────────────────────────────────────────
     add_custom_command(TARGET ToonTrad POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

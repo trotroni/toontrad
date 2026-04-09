@@ -23,12 +23,24 @@
        </item>
        <item><widget class="QPushButton" name="btnNext"><property name="text"><string>Suivant ▶</string></property></widget></item>
 
-       <item><widget class="QFrame"><property name="frameShape"><enum>QFrame::VLine</enum></property></widget></item>
+       <item><widget class="QFrame" name="sep1"><property name="frameShape"><enum>QFrame::VLine</enum></property></widget></item>
 
        <item>
         <widget class="QPushButton" name="btnRunOCR">
          <property name="text"><string>▶ OCR</string></property>
          <property name="styleSheet"><string>font-weight: bold;</string></property>
+        </widget>
+       </item>
+
+       <item><widget class="QFrame" name="sep2"><property name="frameShape"><enum>QFrame::VLine</enum></property></widget></item>
+
+       <!-- Toggle OCR automatique -->
+       <item>
+        <widget class="QCheckBox" name="chkAutoOCR">
+         <property name="text"><string>OCR auto</string></property>
+         <property name="toolTip"><string>Si coché : OCR lancé automatiquement à chaque nouvelle bulle dessinée.
+Si décoché : la bulle est créée vide, à remplir manuellement.</string></property>
+         <property name="checked"><bool>true</bool></property>
         </widget>
        </item>
 

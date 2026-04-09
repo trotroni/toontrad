@@ -20,18 +20,15 @@ public:
                          QWidget* parent = nullptr);
     ~ImageWindow();
 
-    // Appelé par TextWindow pour synchroniser
     void highlightBlock(int id);
     void reorderBlocks(const QList<int>& newIdOrder);
 
-signals:
-    // Émis vers TextWindow
-    void blockSelected(int id);
+    signals:
+        void blockSelected(int id);
     void blocksChanged(const std::vector<TextBlock>& blocks);
     void pageChanged(int pageIndex);
 
 public slots:
-    // Reçoit les mises à jour du TextWindow
     void onBlockUpdated(int id, const QString& trad,
                         const QString& status, const QString& notes);
 
@@ -57,14 +54,18 @@ private:
     OCRConfig  m_config;
     int        m_currentPageIndex = 0;
 
+    // true  → OCR lancé automatiquement après chaque drag
+    // false → bulle créée vide, à remplir manuellement
+    bool m_autoOCR = true;
+
     void loadPage(int index);
     void displayImage();
     void displayBlocks();
     void updateNavButtons();
 
     int     nextBlockId();
-    QString runOCROnCrop(const QString& cropPath);  // OCR direct sur un crop
-    void runOCR();
+    QString runOCROnCrop(const QString& cropPath);
+    void    runOCR();
 
     ImagePage* currentPage();
     QString    currentImagePath();
